@@ -1,0 +1,12 @@
+{
+  "apps": [
+    {
+      "name": "Orac",
+      "script": "node/server.js",
+      "max_memory_restart": "500M",
+      "watch": false,
+      "merge_logs": true,
+      "exec_interpreter": "node"
+    }
+  ]
+}
