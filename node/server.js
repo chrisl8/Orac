@@ -529,7 +529,7 @@ function handleWebsocketInput(input) {
     Array.isArray(input.event.data.service_data.entity_id)
   ) {
     // Service Called
-    const services = input.event.service_data.entity_id.join(' ');
+    const services = input.event.data.service_data.entity_id.join(' ');
     console.log(
       `Service Called: ${input.event.data.domain} ${input.event.data.service} ${services}`,
     );
