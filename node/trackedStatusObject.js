@@ -4,7 +4,7 @@ const trackedStatusObject = {
     level: null,
     isCharging: null,
     lastNeedToChargeMessageSent: null,
-    lastCharginDoneMessageSent: null,
+    lastChargingDoneMessageSent: null,
   },
   userLocation: {
     isHome: true, // Assume is home until we know otherwise
@@ -21,6 +21,7 @@ const trackedStatusObject = {
   officeLights: {
     wallSwitchOff: false,
     on: null,
+    onSince: new Date(),
     facing_back_yard: null,
     facing_closset: null,
     facing_door: null,
