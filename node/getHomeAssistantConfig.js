@@ -1,6 +1,6 @@
-import { fileURLToPath } from "url";
-import { dirname } from "path";
-import readObjectFromFile from "./readObjectFromFile.js";
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import readObjectFromFile from './readObjectFromFile.js';
 
 // https://stackoverflow.com/a/64383997/4982408
 // eslint-disable-next-line no-underscore-dangle
