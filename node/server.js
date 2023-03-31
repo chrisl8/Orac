@@ -685,16 +685,19 @@ while (keepTrying) {
   // Remind to stand up if
   //  - User is home
   //  - Office Lights are on (probably in office)
+  //  - And have been on for over 15 minutes.
   //  - Minutes is > 29
   //  - Last message sent more than 30 minutes ago
   //  - TODO: Any way to check activity data? sensor.sonic_screwdriver_activity
   if (
     trackedStatusObject.userLocation.isHome &&
     trackedStatusObject.officeLights.on &&
+    officeLightsOnMinutes > 15 &&
     currentHour > 6 &&
     currentHour < 18 &&
     currentMinute > 29
   ) {
+    // TODO: I'd like this to always hit at a certain time period like between 40 and 50 minutes after the hour or 30 and 40, but somethign consistent, so it isn't sometimes happening at :58
     // First check when we last sent a message, so we don't send duplicates
     const standUpLastMessageSent = await persistentData.get(
       'standUpLastMessageSent',
@@ -716,4 +719,8 @@ while (keepTrying) {
   // TODO: Notify me if my car gas is low.
   // TODO: Notify me if my car is unlocked or windows down or top down when I'm not moving?
   // TODO: Track requests (by ID) and note when responses relate to those requests.
+  // TODO: Ambient noises.
+  // TODO: Note if I'm in the office with no music playing and suggest something.
+  // TODO: Finda small screen to slip under monitor and hook to pi to display current stats adn what's next?
+  // TODO: Hook up button board  and have it like flash a ligth somewher with a color to indicate a "need to do" and I press it to clear it as "done". Screen could show what color is what thing.
 }
