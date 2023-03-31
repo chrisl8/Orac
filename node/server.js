@@ -168,6 +168,7 @@ async function handleEntriesWithEventData(eventData) {
         trackedStatusObject.officeLights.facing_door ||
         trackedStatusObject.officeLights.facing_closset;
       if (trackedStatusObject.officeLights.on !== currentOfficeLightState) {
+        trackedStatusObject.officeLights.onSince = new Date();
         console.log(
           `Office Lights are now ${
             trackedStatusObject.officeLights.on ? 'on' : 'off'
@@ -596,6 +597,11 @@ const keepTrying = true;
 while (keepTrying) {
   await wait(1000 * 60); // Delay between rechecks
 
+  // Calculate how long the office lights have been on
+  const officeLightsOnMinutes =
+    new Date().getMinutes() -
+    trackedStatusObject.officeLights.onSince.getMinutes();
+
   // Check last PONG time and send new PING
   if (new Date().getMinutes() - trackedStatusObject.lastPong.getMinutes() > 3) {
     console.error('Connection to Home Assistant appears to be down!');
@@ -616,6 +622,7 @@ while (keepTrying) {
   // Send Charge Watch notice
   //  - Christen is HOME
   //  - Office Lights are On
+  //  - and have been on for over 30 minutes.
   //  - Watch battery < X %
   //  - Watch battery not currently charging
   //  - Time of day is between 8am and 5pm
@@ -623,6 +630,7 @@ while (keepTrying) {
   if (
     trackedStatusObject.userLocation.isHome &&
     trackedStatusObject.officeLights.on &&
+    officeLightsOnMinutes > 30 &&
     trackedStatusObject.watchBattery.level < 90 &&
     !trackedStatusObject.watchBattery.isCharging &&
     currentHour > 7 &&
@@ -645,13 +653,14 @@ while (keepTrying) {
   // Turn off Office Lights if
   // - Office lights are on
   // - Last motion was greater than 30 minutes ago
+  const turnOffOfficeLightsAfterMinutes = 60;
   if (trackedStatusObject.officeLights.on) {
     const officeMotionDetected = await persistentData.get(
       'officeMotionDetected',
     );
     const lastOfficeMotionDetectedMinutesAgo =
       (new Date().getTime() - officeMotionDetected.timestamp) / 1000 / 60;
-    if (lastOfficeMotionDetectedMinutesAgo > 30) {
+    if (lastOfficeMotionDetectedMinutesAgo > turnOffOfficeLightsAfterMinutes) {
       console.log('Turning off office lights due to inactivity.');
       id++;
       ws.send(
