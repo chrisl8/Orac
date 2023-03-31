@@ -1,6 +1,7 @@
 /* eslint-disable no-case-declarations,no-fallthrough,no-await-in-loop */
 import WebSocket from 'ws';
 import getHomeAssistantConfig from './getHomeAssistantConfig.js';
+import webserver from './webserver.js';
 import wait from './wait.js';
 import makeRandomNumber from './makeRandomNumber.js';
 import trackedStatusObject from './trackedStatusObject.js';
@@ -590,6 +591,9 @@ ws.on('message', (data) => {
     handleWebsocketInput(dataObject);
   }
 });
+
+// Start web server
+await webserver();
 
 // TODO: Send PING's periodically and shut down if no response, so that PM2 will restart this.
 
