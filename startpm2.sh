@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
+export NVM_DIR="${HOME}/.nvm"
+# shellcheck source=/home/chrisl8/.nvm/nvm.sh
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
 
-export PATH=/home/ovos/bin:/home/ovos/bin/node/bin:${PATH}
-cd "/home/ovos/Orac" || exit
-pm2 start "/home/ovos/Orac/node/pm2Config.json"
+cd "${HOME}/Orac" || exit
+pm2 start "${HOME}/Orac/node/pm2Config.json"
