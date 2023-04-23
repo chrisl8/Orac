@@ -3,11 +3,24 @@ import WebSocket from 'ws';
 import getHomeAssistantConfig from './getHomeAssistantConfig.js';
 import webserver from './webserver.js';
 import wait from './wait.js';
+import pushMe from './pushMe.js';
+import isToday from './dateIsToday.js';
+import RobotWebServerData from './robotWebServerData.js';
 import makeRandomNumber from './makeRandomNumber.js';
 import trackedStatusObject from './trackedStatusObject.js';
 import persistentData from './persistentKeyValuePairs.js';
-import pushMe from './pushMe.js';
-import isToday from './dateIsToday.js';
+import MyCroft from './MyCroft.js';
+import HttpRequest from './httpRequest.js';
+
+// TODO: Currently we only use Mycroft to SAY stuff, but it would be nice to monitor it and possibly use it to:
+//       Inject actions to do based on input?
+//       Use the screen.
+
+// Dalek One interaction Data
+const robotWebserverData = await RobotWebServerData();
+const dalekOneConnectInfo = robotWebserverData.find(
+  (entry) => entry.name === 'DalekOne',
+);
 
 const sentRequests = new Map();
 
@@ -37,7 +50,7 @@ function getStateFromEventOrState(eventData) {
   return state;
 }
 
-async function handleEntriesWithEventData(eventData) {
+async function handleEntriesWithEventData(eventData, initialData) {
   const state = getStateFromEventOrState(eventData);
   switch (eventData.entity_id) {
     case 'binary_sensor.basement':
@@ -51,6 +64,7 @@ async function handleEntriesWithEventData(eventData) {
       }
       break;
     case 'sensor.christens_apple_watch_battery_state':
+    case 'sensor.christens_apple_watch_battery_state_2':
       if (
         state.newState.hasOwnProperty('attributes') &&
         state.newState.attributes.hasOwnProperty('battery')
@@ -109,9 +123,12 @@ async function handleEntriesWithEventData(eventData) {
 
     // GPS Location Trackers
     case 'device_tracker.christens_apple_watch':
+    case 'device_tracker.christens_apple_watch_2':
     case 'device_tracker.cooper_s':
     case 'device_tracker.sonicscrewdriver':
+    case 'device_tracker.sonicscrewdriver_2':
     case 'device_tracker.christens_ipad_2':
+    case 'device_tracker.christens_ipad_3':
     case 'device_tracker.sm_n986u1':
     case 'device_tracker.amazon_kindle_fire':
     case 'device_tracker.christens_ipad':
@@ -150,8 +167,7 @@ async function handleEntriesWithEventData(eventData) {
           `Christen has just ${userIsHome ? 'arrived home' : 'left'}.`,
         );
         console.log(trackedStatusObject.userLocation);
-        // TODO: Send a Pushover (free) message about leaving/arriving home.
-        // TODO: This might need to be rate limited?
+        pushMe(`${userIsHome ? 'Welcome home!' : "Bye. :'("}.`);
       }
       break;
     // Office Lights
@@ -175,6 +191,11 @@ async function handleEntriesWithEventData(eventData) {
             trackedStatusObject.officeLights.on ? 'on' : 'off'
           }.`,
         );
+
+        // Do something when the lights come on
+        if (!initialData && trackedStatusObject.officeLights.on) {
+          MyCroft.sayText('I sense a disturbance in the force.');
+        }
       }
       break;
 
@@ -206,8 +227,24 @@ async function handleEntriesWithEventData(eventData) {
     case 'button.cooper_s_find_vehicle':
     case 'button.cooper_s_refresh_from_cloud':
 
+    case 'sensor.unnamed_room_battery':
+    case 'binary_sensor.unnamed_room_power':
+    case 'media_player.unnamed_room_2':
+    case 'number.unnamed_room_bass_2':
+    case 'number.unnamed_room_treble_2':
+    case 'switch.unnamed_room_crossfade':
+    case 'switch.unnamed_room_loudness':
+    case 'binary_sensor.unnamed_room_microphone':
+
     case 'person.christen_lofland':
     case 'sun.sun':
+    case 'sensor.sun_next_dawn':
+    case 'sensor.sun_next_dusk':
+    case 'sensor.sun_next_midnight':
+    case 'sensor.sun_next_noon':
+    case 'sensor.sun_next_rising':
+    case 'sensor.sun_next_setting':
+
     case 'media_player.spotify_christen_lofland':
     case 'update.home_assistant_supervisor_update':
     case 'update.home_assistant_core_update':
@@ -251,6 +288,7 @@ async function handleEntriesWithEventData(eventData) {
     case 'scene.tech_dungeon_electric_beach':
     case 'scene.tech_dungeon_read':
     case 'scene.office_overhead_some_colors':
+    case 'scene.tech_dungeon_red_dessert':
     case 'media_player.samsung_8_series_55_2':
     case 'light.hue_color_lamp_1_6':
     case 'light.hue_color_lamp_1_2':
@@ -262,12 +300,14 @@ async function handleEntriesWithEventData(eventData) {
     case 'light.east_fixture_facing_becky':
     case 'light.east_fixture_facing_window':
     case 'light.hue_color_lamp_1_4':
+    case 'sensor.hue_dimmer_switch_1_battery':
     case 'light.office_closet':
     case 'light.office_fan':
     case 'light.tech_dungeon':
     case 'weather.home':
     case 'sensor.sonicscrewdriver_battery_state':
     case 'sensor.christens_ipad_battery_state_2':
+    case 'sensor.christens_ipad_battery_state_3':
     case 'binary_sensor.rpi_power_status':
     case 'sensor.sm_n986u1_battery_level':
     case 'sensor.sm_n986u1_battery_state':
@@ -300,6 +340,7 @@ async function handleEntriesWithEventData(eventData) {
     case 'sensor.sonic_screwdriver_floors_descended':
     case 'sensor.sonic_screwdriver_battery_level':
     case 'sensor.sonic_screwdriver_battery_state':
+    case 'sensor.sonicscrewdriver_battery_state_2':
     case 'sensor.sonic_screwdriver_storage':
     case 'sensor.sonic_screwdriver_ssid':
     case 'sensor.sonic_screwdriver_bssid':
@@ -344,9 +385,19 @@ async function handleEntriesWithEventData(eventData) {
     case 'sensor.back_porch_last_activity':
     case 'sensor.front_door_last_ding':
     case 'sensor.front_door_last_motion':
+
+    // RING Cameras
     case 'camera.front_door':
     case 'sensor.back_porch_last_motion':
     case 'camera.back_porch':
+    case 'camera.mobile_camera':
+    case 'binary_sensor.mobile_camera_motion':
+    case 'sensor.mobile_camera_battery':
+    case 'sensor.mobile_camera_volume':
+    case 'switch.mobile_camera_siren':
+    case 'sensor.mobile_camera_last_activity':
+    case 'sensor.mobile_camera_last_motion':
+
     case 'switch.3d_printer_socket_1':
     case 'switch.office_lamp_socket_1':
     case 'switch.lava_lamp_socket_1':
@@ -412,15 +463,56 @@ async function handleEntriesWithEventData(eventData) {
     case 'binary_sensor.back_door_living_room_tamper':
     case 'binary_sensor.back_door_living_room':
     case 'select.back_door_living_room_bypass_mode':
-    case 'sensor.door_to_garage_info':
-    case 'sensor.door_to_garage_battery':
-    case 'binary_sensor.door_to_garage_tamper':
+      break;
     case 'binary_sensor.door_to_garage':
+      // Office Motion Sensor
+      if (
+        state.newState.hasOwnProperty('state') &&
+        state.newState.state === 'on'
+      ) {
+        // TODO: Just turn lights on/off as door opens/shuts.
+        // TODO: Only turn off lights if ALL doors are shut
+        await persistentData.set('kitchenDoorToGarageOpen', true);
+        // await HttpRequest({
+        //   url: `http://${dalekOneConnectInfo.ip}/servo/eyeStalk/-1000`,
+        // });
+        // await wait(1000);
+        // await HttpRequest({
+        //   url: `http://${dalekOneConnectInfo.ip}/servo/eyeStalk/1000`,
+        // });
+        // await wait(1000);
+        // await HttpRequest({
+        //   url: `http://${dalekOneConnectInfo.ip}/servo/eyeStalk/0`,
+        // });
+        // await wait(1000);
+      } else {
+        await persistentData.set('kitchenDoorToGarageOpen', false);
+      }
+      const testData = await persistentData.get('kitchenDoorToGarageOpen');
+      console.log(
+        `Kitchen Door To Garage ${testData.value === '1' ? 'OPEN' : 'Closed'}`,
+      );
+      break;
+    case 'sensor.door_to_garage_battery':
+    case 'sensor.door_to_garage_info':
+    case 'binary_sensor.door_to_garage_tamper':
     case 'select.door_to_garage_bypass_mode':
+
+    // RING Keypads
+    // Office RING Keypad
+    case 'binary_sensor.office_keypad_motion':
     case 'sensor.office_keypad_info':
     case 'sensor.office_keypad_battery':
     case 'binary_sensor.office_keypad_tamper':
     case 'number.office_keypad_volume':
+
+    // Bedroom RING Keypad
+    case 'binary_sensor.master_bedroom_keypad_motion':
+    case 'sensor.master_bedroom_keypad_info':
+    case 'sensor.master_bedroom_keypad_battery':
+    case 'binary_sensor.master_bedroom_keypad_tamper':
+    case 'number.master_bedroom_keypad_volume':
+
     case 'sensor.front_door_info':
     case 'sensor.front_door_battery_2':
     case 'binary_sensor.front_door_tamper':
@@ -441,10 +533,6 @@ async function handleEntriesWithEventData(eventData) {
     case 'binary_sensor.garage_door_west_tamper':
     case 'binary_sensor.garage_door_west':
     case 'select.garage_door_west_bypass_mode':
-    case 'sensor.master_bedroom_keypad_info':
-    case 'sensor.master_bedroom_keypad_battery':
-    case 'binary_sensor.master_bedroom_keypad_tamper':
-    case 'number.master_bedroom_keypad_volume':
     case 'sensor.basement_info':
     case 'sensor.basement_battery':
     case 'binary_sensor.basement_tamper':
@@ -465,6 +553,66 @@ async function handleEntriesWithEventData(eventData) {
     case 'binary_sensor.kitchen_window':
     case 'select.kitchen_window_bypass_mode':
     case 'number.wichita_base_station_volume':
+      break;
+
+    // These seem to be device tracker entities that I don't actually have?
+    // Perhaps something built into iPhone setup now?
+    case 'device_tracker.blesmart_0000015f005fbf99df24':
+    case 'sensor.blesmart_0000015f005fbf99df24_estimated_distance':
+    case 'device_tracker.rivian_phone_key_ee35':
+    case 'sensor.rivian_phone_key_ee35_estimated_distance':
+      if (!initialData) {
+        console.log(eventData);
+      }
+      break;
+
+    case 'persistent_notification.config_entry_discovery':
+      // This fires when new devices are detected on the network.
+      if (!initialData && trackedStatusObject.officeLights.on) {
+        MyCroft.sayText('Something new detected in the ether.');
+      }
+      break;
+
+    // WLED
+    case 'sensor.wled_estimated_current':
+    case 'switch.wled_sync_receive':
+    case 'light.wled_master':
+    case 'light.wled':
+    case 'light.wled_segment_1':
+    case 'light.wled_segment_2':
+    case 'light.wled_segment_3':
+    case 'light.wled_segment_4':
+    case 'number.wled_speed':
+    case 'number.wled_intensity':
+    case 'number.wled_segment_1_speed':
+    case 'number.wled_segment_1_intensity':
+    case 'number.wled_segment_2_speed':
+    case 'number.wled_segment_2_intensity':
+    case 'number.wled_segment_3_speed':
+    case 'number.wled_segment_3_intensity':
+    case 'number.wled_segment_4_speed':
+    case 'number.wled_segment_4_intensity':
+    case 'select.wled_live_override':
+    case 'select.wled_playlist':
+    case 'select.wled_preset':
+    case 'select.wled_color_palette':
+    case 'select.wled_segment_1_color_palette':
+    case 'select.wled_segment_2_color_palette':
+    case 'select.wled_segment_3_color_palette':
+    case 'select.wled_segment_4_color_palette':
+    case 'sensor.wled_led_count':
+    case 'sensor.wled_max_current':
+    case 'sensor.wled_ip':
+    case 'switch.wled_nightlight':
+    case 'switch.wled_sync_send':
+    case 'switch.wled_reverse':
+    case 'switch.wled_segment_1_reverse':
+    case 'switch.wled_segment_2_reverse':
+    case 'switch.wled_segment_3_reverse':
+    case 'switch.wled_segment_4_reverse':
+    case 'button.wled_restart':
+    case 'update.wled_firmware':
+      break;
 
     // Automations also fire events!
     case 'automation.office_motion_lights':
@@ -494,6 +642,7 @@ function handleWebsocketInput(input) {
     input.event.data.hasOwnProperty('old_state') &&
     input.event.data.hasOwnProperty('new_state')
   ) {
+    // These are the real time updates
     handleEntriesWithEventData(input.event.data);
   } else if (
     input.hasOwnProperty('type') &&
@@ -503,9 +652,10 @@ function handleWebsocketInput(input) {
     input.hasOwnProperty('result') &&
     Array.isArray(input.result)
   ) {
+    // This is the initial set of all values when connecting
     input.result.forEach((entry) => {
       if (entry.hasOwnProperty('entity_id')) {
-        handleEntriesWithEventData(entry);
+        handleEntriesWithEventData(entry, true);
       }
     });
   } else if (
@@ -516,7 +666,9 @@ function handleWebsocketInput(input) {
     input.event.data.hasOwnProperty('name')
   ) {
     // Automation Triggered
-    console.log(`Automation Triggered: ${input.event.data.name}`);
+    console.log(
+      `Home Assistant Automation Triggered: ${input.event.data.name}`,
+    );
     // If we want to see more info on these automations, add more console logs
     // or if we want to act on these in some way, add a full on function with a switch case.
   } else if (
@@ -550,6 +702,23 @@ function handleWebsocketInput(input) {
     console.log(sentRequests.get(input.id));
     console.log(`${input.success ? 'Succeeded' : 'Failed'}`);
     console.log(input.result);
+  } else if (
+    input.type === 'event' &&
+    input.hasOwnProperty('event') &&
+    input.event.hasOwnProperty('event_type')
+  ) {
+    // Simple events
+    switch (input.event.event_type) {
+      case 'hue_event':
+      case 'recorder_5min_statistics_generated':
+      case 'recorder_hourly_statistics_generated':
+      case 'lovelace_updated':
+      case 'entity_registry_updated':
+        // I think entity_registry_updated happens when a lovelace card is updated.
+        break;
+      default:
+        console.log(`Unknown Home Assistant Event: ${input.event.event_type}`);
+    }
   } else {
     console.log('Unknown Websocket input type from Home Assistant:');
     console.log(input);
@@ -595,10 +764,7 @@ ws.on('message', (data) => {
 // Start web server
 await webserver();
 
-// TODO: Send PING's periodically and shut down if no response, so that PM2 will restart this.
-
-const keepTrying = true;
-while (keepTrying) {
+while (trackedStatusObject.keepRunning) {
   await wait(1000 * 60); // Delay between rechecks
 
   // Calculate how long the office lights have been on
@@ -606,10 +772,11 @@ while (keepTrying) {
     new Date().getMinutes() -
     trackedStatusObject.officeLights.onSince.getMinutes();
 
+  // Send PING's periodically and shut down if no response, so that PM2 will restart this.
   // Check last PONG time and send new PING
   if (new Date().getMinutes() - trackedStatusObject.lastPong.getMinutes() > 3) {
     console.error('Connection to Home Assistant appears to be down!');
-    process.exit(1);
+    trackedStatusObject.keepRunning = false;
   } else {
     // Send a new PING
     id++;
@@ -697,7 +864,7 @@ while (keepTrying) {
     currentHour < 18 &&
     currentMinute > 29
   ) {
-    // TODO: I'd like this to always hit at a certain time period like between 40 and 50 minutes after the hour or 30 and 40, but somethign consistent, so it isn't sometimes happening at :58
+    // TODO: I'd like this to always hit at a certain time period like between 40 and 50 minutes after the hour or 30 and 40, but something consistent, so it isn't sometimes happening at :58
     // First check when we last sent a message, so we don't send duplicates
     const standUpLastMessageSent = await persistentData.get(
       'standUpLastMessageSent',
@@ -721,6 +888,9 @@ while (keepTrying) {
   // TODO: Track requests (by ID) and note when responses relate to those requests.
   // TODO: Ambient noises.
   // TODO: Note if I'm in the office with no music playing and suggest something.
-  // TODO: Finda small screen to slip under monitor and hook to pi to display current stats adn what's next?
-  // TODO: Hook up button board  and have it like flash a ligth somewher with a color to indicate a "need to do" and I press it to clear it as "done". Screen could show what color is what thing.
+  // TODO: Hook up button board  and have it like flash a light somewhere with a color to indicate a "need to do" and I press it to clear it as "done". Screen could show what color is what thing.
+  // TODO: Find some way to display information to the screen.
+  // TODO: DIM screen when all hue lights are off.
 }
+
+console.error('Orac is shutting down.');
