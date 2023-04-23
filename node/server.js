@@ -50,7 +50,7 @@ function getStateFromEventOrState(eventData) {
   return state;
 }
 
-async function handleEntriesWithEventData(eventData, initialData) {
+async function handleEntriesWithEventData(eventData, isInitialData) {
   const state = getStateFromEventOrState(eventData);
   switch (eventData.entity_id) {
     case 'binary_sensor.basement':
@@ -193,7 +193,7 @@ async function handleEntriesWithEventData(eventData, initialData) {
         );
 
         // Do something when the lights come on
-        if (!initialData && trackedStatusObject.officeLights.on) {
+        if (!isInitialData && trackedStatusObject.officeLights.on) {
           MyCroft.sayText('I sense a disturbance in the force.');
         }
       }
@@ -561,14 +561,14 @@ async function handleEntriesWithEventData(eventData, initialData) {
     case 'sensor.blesmart_0000015f005fbf99df24_estimated_distance':
     case 'device_tracker.rivian_phone_key_ee35':
     case 'sensor.rivian_phone_key_ee35_estimated_distance':
-      if (!initialData) {
+      if (!isInitialData) {
         console.log(eventData);
       }
       break;
 
     case 'persistent_notification.config_entry_discovery':
       // This fires when new devices are detected on the network.
-      if (!initialData && trackedStatusObject.officeLights.on) {
+      if (!isInitialData && trackedStatusObject.officeLights.on) {
         MyCroft.sayText('Something new detected in the ether.');
       }
       break;
@@ -602,7 +602,6 @@ async function handleEntriesWithEventData(eventData, initialData) {
     case 'select.wled_segment_4_color_palette':
     case 'sensor.wled_led_count':
     case 'sensor.wled_max_current':
-    case 'sensor.wled_ip':
     case 'switch.wled_nightlight':
     case 'switch.wled_sync_send':
     case 'switch.wled_reverse':
@@ -612,6 +611,9 @@ async function handleEntriesWithEventData(eventData, initialData) {
     case 'switch.wled_segment_4_reverse':
     case 'button.wled_restart':
     case 'update.wled_firmware':
+      break;
+    case 'sensor.wled_ip':
+      console.log(eventData);
       break;
 
     // Automations also fire events!
