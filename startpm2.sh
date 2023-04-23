@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-export PATH=/home/mycroft/bin:/home/mycroft/bin/node/bin:${PATH}
-cd "/home/mycroft/Orac" || exit
-pm2 start "/home/mycroft/Orac/node/pm2Config.json"
+export PATH=/home/ovos/bin:/home/ovos/bin/node/bin:${PATH}
+cd "/home/ovos/Orac" || exit
+pm2 start "/home/ovos/Orac/node/pm2Config.json"

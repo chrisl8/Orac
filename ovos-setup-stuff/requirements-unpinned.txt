@@ -1,0 +1,268 @@
+Adafruit-Blinka
+adafruit-circuitpython-busdevice
+adafruit-circuitpython-neopixel
+adafruit-circuitpython-pixelbuf
+adafruit-circuitpython-requests
+adafruit-circuitpython-typing
+Adafruit-PlatformDetect
+Adafruit-PureIO
+adapt-parser
+appdirs
+attrs
+autocommand
+beautifulsoup4
+bidict
+bitstruct
+board
+Brotli
+bs4
+btrfs
+btrfsutil
+cattrs
+certifi
+cffi
+chardet
+charset-normalizer
+click
+click-default-group
+cloudscraper
+colour
+combo-lock
+cryptography
+Cython
+dbus-next
+decorator
+distlib
+exceptiongroup
+fann2
+fastjsonschema
+feedparser
+filelock
+Flask
+Flask-FontAwesome
+flask-simplelogin
+Flask-SocketIO
+Flask-WTF
+future
+geocoder
+geographiclib
+geopy
+gTTS
+h3
+idna
+importlib-metadata
+inflect
+inflection
+itsdangerous
+jaraco.context
+jaraco.functools
+jaraco.text
+Jinja2
+joblib
+json-database
+kthread
+langcodes
+Mako
+Markdown
+markdown-it-py
+MarkupSafe
+mdurl
+memory-tempfile
+meson
+more-itertools
+mutagen
+mycroft-messagebus-client
+neon-lang-plugin-libretranslate
+neon-mana-utils
+neon-phal-plugin-fan @ git+https://github.com/NeonGeckoCom/neon-phal-plugin-fan
+neon-phal-plugin-linear-led @ git+https://github.com/NeonGeckoCom/neon-phal-plugin-linear_led
+neon-phal-plugin-switches @ git+https://github.com/NeonGeckoCom/neon-phal-plugin-switches
+neon-skill-alerts
+neon-solver-wikipedia-plugin
+neon-solver-wolfram-alpha-plugin
+neon-solvers
+neon-utils
+nested-lookup
+nltk
+npyscreen
+numpy
+oauthlib
+ordered-set
+ovos-audio-plugin-simple @ git+https://github.com/OpenVoiceOS/ovos-audio-plugin-simple
+ovos-backend-client @ git+https://github.com/OpenVoiceOS/ovos-backend-client
+ovos-bus-client @ git+https://github.com/OpenVoiceOS/ovos-bus-client
+ovos-cli-client @ git+https://github.com/OpenVoiceOS/ovos-cli-client
+ovos-config @ git+https://github.com/OpenVoiceOS/ovos-config
+ovos-core @ git+https://github.com/OpenVoiceOS/ovos-core
+ovos-lingua-franca @ git+https://github.com/OpenVoiceOS/ovos-lingua-franca
+#ovos-skill-homescreen 0.0.2a11 depends on ovos-lingua-franca==0.4.7a1
+#ovos-lingua-franca==0.4.7a1
+ovos-ocp-bandcamp-plugin @ git+https://github.com/OpenVoiceOS/ovos-ocp-bandcamp-plugin
+# I'm not using Deezer
+#deezeridu
+#ovos-ocp-deezer-plugin @ git+https://github.com/OpenVoiceOS/ovos-ocp-deezer-plugin
+ovos-ocp-files-plugin @ git+https://github.com/OpenVoiceOS/ovos-ocp-files-plugin
+ovos-ocp-m3u-plugin @ git+https://github.com/OpenVoiceOS/ovos-ocp-m3u-plugin
+ovos-ocp-news-plugin @ git+https://github.com/OpenVoiceOS/ovos-ocp-news-plugin
+ovos-ocp-rss-plugin @ git+https://github.com/OpenVoiceOS/ovos-ocp-rss-plugin
+ovos-ocp-youtube-plugin @ git+https://github.com/OpenVoiceOS/ovos-ocp-youtube-plugin
+ovos-PHAL @ git+https://github.com/OpenVoiceOS/ovos-PHAL
+ovos-PHAL-plugin-alsa @ git+https://github.com/OpenVoiceOS/ovos-PHAL-plugin-alsa
+ovos-PHAL-plugin-brightness-control-rpi @ git+https://github.com/OpenVoiceOS/ovos-PHAL-plugin-brightness-control-rpi
+ovos-PHAL-plugin-color-scheme-manager @ git+https://github.com/OpenVoiceOS/ovos-PHAL-plugin-color-scheme-manager
+ovos-PHAL-plugin-configuration-provider @ git+https://github.com/OpenVoiceOS/ovos-PHAL-plugin-configuration-provider
+ovos-phal-plugin-connectivity-events @ git+https://github.com/OpenVoiceOS/ovos-phal-plugin-connectivity-events
+ovos-PHAL-plugin-dashboard @ git+https://github.com/OpenVoiceOS/ovos-PHAL-plugin-dashboard
+ovos-PHAL-plugin-gui-network-client @ git+https://github.com/OpenVoiceOS/ovos-PHAL-plugin-gui-network-client
+ovos-PHAL-plugin-homeassistant @ git+https://github.com/OpenVoiceOS/ovos-PHAL-plugin-homeassistant
+ovos-phal-plugin-ipgeo @ git+https://github.com/OpenVoiceOS/ovos-phal-plugin-ipgeo
+ovos-PHAL-plugin-network-manager @ git+https://github.com/OpenVoiceOS/ovos-PHAL-plugin-network-manager
+ovos-PHAL-plugin-notification-widgets @ git+https://github.com/OpenVoiceOS/ovos-PHAL-plugin-notification-widgets
+ovos-PHAL-plugin-oauth @ git+https://github.com/OpenVoiceOS/ovos-PHAL-plugin-oauth
+ovos-PHAL-plugin-pulseaudio @ git+https://github.com/OpenVoiceOS/ovos-PHAL-plugin-pulseaudio
+ovos-PHAL-plugin-system @ git+https://github.com/OpenVoiceOS/ovos-PHAL-plugin-system
+ovos-PHAL-plugin-wallpaper-manager @ git+https://github.com/OpenVoiceOS/ovos-PHAL-plugin-wallpaper-manager
+ovos-PHAL-plugin-wifi-setup @ git+https://github.com/OpenVoiceOS/ovos-PHAL-plugin-wifi-setup
+ovos-plugin-common-play @ git+https://github.com/OpenVoiceOS/ovos-ocp-audio-plugin
+ovos-plugin-manager @ git+https://github.com/OpenVoiceOS/ovos-plugin-manager
+ovos-skill-date-time @ git+https://github.com/OpenVoiceOS/skill-ovos-date-time
+ovos-skill-fallback-unknown @ git+https://github.com/OpenVoiceOS/ovos-skill-fallback-unknown
+ovos-skill-filebrowser @ git+https://github.com/OpenVoiceOS/skill-ovos-filebrowser
+ovos-skill-hello-world @ git+https://github.com/OpenVoiceOS/ovos-skill-hello-world
+ovos-skill-homescreen @ git+https://github.com/OpenVoiceOS/skill-ovos-homescreen
+ovos-skill-installer @ git+https://github.com/OpenVoiceOS/ovos_skill_installer
+ovos-skill-naptime @ git+https://github.com/OpenVoiceOS/ovos-skill-naptime
+ovos-skill-personal @ git+https://github.com/OpenVoiceOS/skill-ovos-personal
+ovos-skill-setup @ git+https://github.com/OpenVoiceOS/skill-ovos-setup
+ovos-skill-stop @ git+https://github.com/OpenVoiceOS/skill-ovos-stop
+ovos-skill-volume @ git+https://github.com/OpenVoiceOS/skill-ovos-volume
+ovos-skills-manager @ git+https://github.com/OpenVoiceOS/ovos_skill_manager
+ovos-stt-plugin-chromium @ git+https://github.com/OpenVoiceOS/ovos-stt-plugin-chromium
+ovos-stt-plugin-selene @ git+https://github.com/OpenVoiceOS/ovos-stt-plugin-selene
+ovos-stt-plugin-server @ git+https://github.com/OpenVoiceOS/ovos-stt-plugin-server
+ovos-tts-plugin-google-tx @ git+https://github.com/OpenVoiceOS/ovos-tts-plugin-google-tx
+ovos-tts-plugin-mimic @ git+https://github.com/OpenVoiceOS/ovos-tts-plugin-mimic
+ovos-tts-plugin-mimic2 @ git+https://github.com/OpenVoiceOS/ovos-tts-plugin-mimic2
+ovos-tts-plugin-mimic3-server @ git+https://github.com/OpenVoiceOS/ovos-tts-plugin-mimic3-server
+ovos-utils @ git+https://github.com/OpenVoiceOS/ovos-utils
+ovos-vad-plugin-webrtcvad @ git+https://github.com/OpenVoiceOS/ovos-vad-plugin-webrtcvad
+ovos-workshop @ git+https://github.com/OpenVoiceOS/OVOS-workshop
+# Only using precise-lite, not precise
+#ovos-ww-plugin-precise @ git+https://github.com/OpenVoiceOS/ovos-ww-plugin-precise
+#precise-runner
+#petact
+ovos-ww-plugin-precise-lite @ git+https://github.com/OpenVoiceOS/ovos-ww-plugin-precise-lite
+precise-lite-runner @ git+https://github.com/OpenVoiceOS/precise_lite_runner.git
+ovos-ww-plugin-vosk @ git+https://github.com/OpenVoiceOS/ovos-ww-plugin-vosk
+# I am not using pocketsphinx for wakeword detection or plugins, but mycroft DOES require pocketsphinx itself!
+#ovos-ww-plugin-pocketsphinx @ git+https://github.com/OpenVoiceOS/ovos-ww-plugin-pocketsphinx
+#neon-tts-plugin-larynx-server
+#phoneme-guesser
+# pocketsphinx AND SpeechRecognition ARE required by Mycroft!
+pocketsphinx
+SpeechRecognition
+packaging
+pacman-mirrors
+padacioso
+padaos
+padatious
+pako
+pendulum
+pexpect
+Pillow
+platformdirs
+ply
+pprintpp
+psutil
+ptyprocess
+py-bandcamp
+py-cpuinfo
+pyalsaaudio
+# I don't really know why this old version of PyAudio from a random git location,
+# but perhaps the latest 0.2.13 breaks something?
+# https://people.csail.mit.edu/hubert/pyaudio/
+#PyAudio @ git+https://git.skeh.site/skeh/pyaudio@f749f2187e232217f8ac112a1226b3af11f008e3
+pyaudio
+pycparser
+pycryptodomex
+pydantic
+pyee
+pyftdi
+Pygments
+# Using the pacman installed version instead, which should update itself when pulling updates for the OS
+#PyGObject
+pyparsing
+pyserial
+python-dateutil
+python-engineio
+python-socketio
+pytube
+pytz
+pytz-deprecation-shim
+pytzdata
+pyusb
+PyYAML
+qrcode
+quebra-frases
+rapidfuzz
+ratelim
+regex
+requests
+requests-cache
+requests-toolbelt
+rich
+rich-click
+rpi-ws281x
+RPi.GPIO
+scipy
+sdnotify
+sgmllib3k
+simplematch
+six
+sj201-interface
+skill-news
+# smbus is installed via pacman, not pip, and doesn't really exist in pip's world.
+# It should update, if needed, via OS updates.
+# Also, it seems to just be an OS package, as nothing depends on it.
+#smbus
+smbus2
+sonopy
+soupsieve
+spidev
+srt
+tailhead
+team
+tflite-runtime @ https://downloads.openvoiceos.com/tflite_runtime-2.12.0-cp310-cp310-linux_aarch64.whl
+timezonefinder
+tomli
+tornado
+tqdm
+trove-classifiers
+tutubo
+typing-extensions
+tzdata
+tzlocal
+Unidecode
+url-normalize
+urllib3
+validate-pyproject
+virtualenv
+vosk
+wallpaper-finder
+watchdog
+webcolors
+webrtcvad
+websocket-client
+websockets
+Werkzeug
+Wikipedia-API
+wikipedia-for-humans
+wrapt
+WTForms
+xxhash
+youtube-search
+yt-dlp
+ytmusicapi
+zipp
+setuptools
+wheel
