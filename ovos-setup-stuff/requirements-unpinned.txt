@@ -95,8 +95,6 @@ ovos-cli-client @ git+https://github.com/OpenVoiceOS/ovos-cli-client
 ovos-config @ git+https://github.com/OpenVoiceOS/ovos-config
 ovos-core @ git+https://github.com/OpenVoiceOS/ovos-core
 ovos-lingua-franca @ git+https://github.com/OpenVoiceOS/ovos-lingua-franca
-#ovos-skill-homescreen 0.0.2a11 depends on ovos-lingua-franca==0.4.7a1
-#ovos-lingua-franca==0.4.7a1
 ovos-ocp-bandcamp-plugin @ git+https://github.com/OpenVoiceOS/ovos-ocp-bandcamp-plugin
 # I'm not using Deezer
 #deezeridu
