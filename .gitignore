@@ -13,4 +13,5 @@ node_modules/
 .homeAssistantConfig.json5
 .pushoverConfig.json5
 .twilioConfig.json5
+.robotWebServer.json5
 database.sqlite
