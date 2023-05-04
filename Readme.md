@@ -27,9 +27,9 @@ battery: 100,
 Things HA is doing by itself already:
 Turn on office lights when Office motion happens.
 
-## Setup
+# Hardware Information and Reference
 
-# SJ201 Reference
+## SJ201 Information
 The board on the top of the Mark II dev kit is called the SJ201.
 
 Hardware Information
@@ -40,8 +40,13 @@ https://github.com/MycroftAI/hardware-mycroft-mark-II
 but there is a more thorough testing suite that should help guide how to connect to all of the features here:
 https://github.com/MycroftAI/mark-ii-hardware-testing
 
+## Setup
+
 ## Raspberry Pi Install and Configuration
- - Use the [Raspberry Pi Imager](https://www.raspberrypi.com/software/) to install  Raspberry Pi OS (64-bit)
+ - Use the [Raspberry Pi Imager](https://www.raspberrypi.com/software/) to install Raspberry Pi OS (64-bit)
+   - and boot it up, no need to edit anything on the config before first boot
+ - Initial boot
+   - Write down the IP
  - Configuration
    - Run `sudo raspi-config` (Note: There is a GUI version of this but it seems to be missing several options.)
      - System Options
@@ -49,22 +54,225 @@ https://github.com/MycroftAI/mark-ii-hardware-testing
      - Display Options
        - Disable Screen Blanking (If you like, I do)
      - Interface Options
-       - Enable Legacy Camera (https://github.com/MycroftAI/mark-ii-hardware-testing)
-         - I'm not 100% sure if this is required to use the camera or only for how Mycroft wanted to use it. Needs testing.
        - Enable SSH
        - Enable SPI (https://github.com/MycroftAI/mark-ii-hardware-testing)
        - Enable I2C (https://github.com/MycroftAI/mark-ii-hardware-testing)
-         - One of the above two makes the touchscreen work, both in `evtest` and in xWindows.
+         - One of the two, SPI and/or I2C, makes the touchscreen work, both in `evtest` and in X Windows.
 
-### Grab the Mycroft test code in case you need it
+NOTE: You do **not** need to enable Legacy Camera Mode, and **should not**. It is only required for old Python scripts, such as Mycroft.
+
+xWindows should just auto-login upon boot.
+SSH in with username/password that you set up.
+
+### boot config References
+https://www.raspberrypi.com/documentation/computers/config_txt.html
+https://github.com/raspberrypi/firmware/blob/master/boot/overlays/README
+
+# All Extra Functions on Raspbian
+
+## SJ201 Board
+Verify SJ201 board exists and find version
+
+References:
+https://github.com/MycroftAI/mark-ii-hardware-testing/blob/main/init_hardware.sh
+https://github.com/MycroftAI/mark-ii-hardware-testing/blob/main/hardware_tests/auto_detect_sj201.py
+
+View all `i2c` devices:
 ```
-cd
-git clone git@github.com:MycroftAI/mark-ii-hardware-testing.git
+❯ sudo i2cdetect -a -y 1
+     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+00: -- -- -- -- 04 -- -- -- -- -- -- -- -- -- -- --
+10: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+20: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 2f
+30: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+40: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+50: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+60: -- -- -- -- -- -- -- -- -- -- -- -- -- 6d -- --
+70: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 ```
 
-### Configure boot parameters
-Edit `/boot/config.txt`
+tiny_address = "04"
+xmos_address = "2c"
+ti_address = "2f"
 
+"Old" SJ201 have "04" (tiny)
+The documentation says they have "all 3" but the "2c" (xmos) seems to go away sometimes, and the presence of the "tiny" is the key to knowing this is an "old" or V1 SJ201.
+
+View all `spi` devices:
+```
+❯ ls -l /dev/spidev*
+crw-rw---- 1 root spi 153, 0 Feb 28 19:41 /dev/spidev0.0
+crw-rw---- 1 root spi 153, 1 Feb 28 19:41 /dev/spidev0.1
+```
+
+## Fan
+Reference: https://github.com/MycroftAI/mark-ii-hardware-testing/blob/main/hardware_tests/old_fan.py
+
+Hardware speed range is appx 30-255.
+`sudo i2cset -a -y 1 0x04 101 0 i # Stop`
+`sudo i2cset -a -y 1 0x04 101 255 i # Full speed`
+
+For some reason we always need `-a` to see 04 both with `i2cdetect` and `i2cset`
+
+## Touchscreen
+Turning on SPI and/or I2C (not sure which) should have allowed touchscreen to work.
+
+ - Test it in xWindows, and it should work.
+   - Try opening Menus
+   - Try inside web browser
+     - Both should work
+
+### Touchscreen from Terminal
+- Install `evtest` and test touchscreen
+    - `sudo apt intall evtest`
+        - Reference: https://github.com/MycroftAI/mark-ii-hardware-testing/blob/main/init_hardware.sh
+    - Run:
+      `sudo evtest`
+    - and, device `event0` should look like this:
+        - Reference: https://github.com/MycroftAI/mark-ii-hardware-testing/blob/main/utils/async_touch.py
+```
+/dev/input/event0:      raspberrypi-ts
+```
+- Note that if set up correctly, that is the ONLY device listed apart from possibly any keyboard/mouse you connected.
+    - While without SPI or I2C turned on, you will see an array of devices for some reason, none of which really do anything.
+- Select it, and tap on the screen and it should output all sorts of fun data about touch/release events!
+    - It does multi-finger-tracking, etc.
+
+I'm not sure yet if I'll try to like display an image and track touches on their own (as Mycroft did),  
+or try to use a web browser interface and use the browser touch input.
+For now, just know it works.
+
+## LED Ring on top
+Reference: https://github.com/MycroftAI/mark-ii-hardware-testing/blob/main/hardware_tests/ledtest_old.py
+
+Use i2cset to set all LEDs to white:
+```
+i2cset -a -y 1 0x04 0 250 250 250 i
+i2cset -a -y 1 0x04 1 250 250 250 i
+i2cset -a -y 1 0x04 2 250 250 250 i
+i2cset -a -y 1 0x04 3 250 250 250 i
+i2cset -a -y 1 0x04 4 250 250 250 i
+i2cset -a -y 1 0x04 5 250 250 250 i
+i2cset -a -y 1 0x04 6 250 250 250 i
+i2cset -a -y 1 0x04 7 250 250 250 i
+i2cset -a -y 1 0x04 8 250 250 250 i
+i2cset -a -y 1 0x04 9 250 250 250 i
+i2cset -a -y 1 0x04 10 250 250 250 i
+i2cset -a -y 1 0x04 11 250 250 250 i
+```
+
+Use i2cset to set all LEDs to red:
+```
+i2cset -a -y 1 0x04 0 250 0 0 i
+i2cset -a -y 1 0x04 1 250 0 0 i
+i2cset -a -y 1 0x04 2 250 0 0 i
+i2cset -a -y 1 0x04 3 250 0 0 i
+i2cset -a -y 1 0x04 4 250 0 0 i
+i2cset -a -y 1 0x04 5 250 0 0 i
+i2cset -a -y 1 0x04 6 250 0 0 i
+i2cset -a -y 1 0x04 7 250 0 0 i
+i2cset -a -y 1 0x04 8 250 0 0 i
+i2cset -a -y 1 0x04 9 250 0 0 i
+i2cset -a -y 1 0x04 10 250 0 0 i
+i2cset -a -y 1 0x04 11 250 0 0 i
+```
+
+Use i2cset to set all LEDs to green:
+```
+i2cset -a -y 1 0x04 0 0 250 0 i
+i2cset -a -y 1 0x04 1 0 250 0 i
+i2cset -a -y 1 0x04 2 0 250 0 i
+i2cset -a -y 1 0x04 3 0 250 0 i
+i2cset -a -y 1 0x04 4 0 250 0 i
+i2cset -a -y 1 0x04 5 0 250 0 i
+i2cset -a -y 1 0x04 6 0 250 0 i
+i2cset -a -y 1 0x04 7 0 250 0 i
+i2cset -a -y 1 0x04 8 0 250 0 i
+i2cset -a -y 1 0x04 9 0 250 0 i
+i2cset -a -y 1 0x04 10 0 250 0 i
+i2cset -a -y 1 0x04 11 0 250 0 i
+```
+
+Use i2cset to set all LEDs to blue:
+```
+i2cset -a -y 1 0x04 0 0 250 250 i
+i2cset -a -y 1 0x04 1 0 250 250 i
+i2cset -a -y 1 0x04 2 0 250 250 i
+i2cset -a -y 1 0x04 3 0 250 250 i
+i2cset -a -y 1 0x04 4 0 250 250 i
+i2cset -a -y 1 0x04 5 0 250 250 i
+i2cset -a -y 1 0x04 6 0 250 250 i
+i2cset -a -y 1 0x04 7 0 250 250 i
+i2cset -a -y 1 0x04 8 0 250 250 i
+i2cset -a -y 1 0x04 9 0 250 250 i
+i2cset -a -y 1 0x04 10 0 250 250 i
+i2cset -a -y 1 0x04 11 0 250 250 i
+```
+
+Use i2cset to turn all LEDs off:
+```
+i2cset -a -y 1 0x04 0 0 0 0 i
+i2cset -a -y 1 0x04 1 0 0 0 i
+i2cset -a -y 1 0x04 2 0 0 0 i
+i2cset -a -y 1 0x04 3 0 0 0 i
+i2cset -a -y 1 0x04 4 0 0 0 i
+i2cset -a -y 1 0x04 5 0 0 0 i
+i2cset -a -y 1 0x04 6 0 0 0 i
+i2cset -a -y 1 0x04 7 0 0 0 i
+i2cset -a -y 1 0x04 8 0 0 0 i
+i2cset -a -y 1 0x04 9 0 0 0 i
+i2cset -a -y 1 0x04 10 0 0 0 i
+i2cset -a -y 1 0x04 11 0 0 0 i
+```
+
+## Switch
+Reference: https://github.com/MycroftAI/mark-ii-hardware-testing/blob/main/utils/async_button.py
+`raspi-gpio get 25`
+
+You can flip the switch back and forth and alternate between:
+`GPIO 25: level=0 fsel=0 func=INPUT pull=DOWN`
+and
+`GPIO 25: level=1 fsel=0 func=INPUT pull=DOWN`
+
+## Buttons
+References:
+ - https://github.com/MycroftAI/mark-ii-hardware-testing/blob/main/utils/async_button.py
+ - https://github.com/MycroftAI/mark-ii-hardware-testing/blob/main/hardware_tests/test_markii.py
+
+- Right Button (S1): 22
+  `raspi-gpio get 22`
+  Result: `GPIO 22: level=1 fsel=0 func=INPUT pull=DOWN`
+  Hold down the "Activate" button and run it again and level should be 0.
+
+- Middle Button (S2): 23
+`raspi-gpio get 23`
+Result: `GPIO 23: level=1 fsel=0 func=INPUT pull=DOWN`
+Hold down the "Activate" button and run it again and level should be 0.
+
+ - Activate Button (Center of LED Ring): 24
+`raspi-gpio get 24`
+Result: `GPIO 24: level=1 fsel=0 func=INPUT pull=DOWN`
+Hold down the "Activate" button and run it again and level should be 0.
+
+## Camera
+Reference: https://www.tomshardware.com/how-to/use-raspberry-pi-camera-with-bullseye
+
+In X Windows run:  
+`libcamera-hello`
+ - You can run this via SSH, but you won't see the output!
+It should open a screen and show you the output from the camera as a video, while streaming data about the images to the terminal.
+ - If you want to have it stay open indefinitely, run `libcamera-hello -t 0`
+
+To take a picture and save it run:  
+`libcamera-jpeg -o test.jpg`
+
+## Speaker
+
+Things I've tried:
+
+Note: The "bcm2835" is the Raspberry Pi onboard chip (Broadcom), so if you see that audio devices, it is NOT the SJ201 speakers.
+
+`sudo vi /boot/config.txt`
 UN-comment the line
 ```
 dtparam=i2s=on
@@ -74,7 +282,126 @@ COMMENT the line:
 #dtparam=audio=on
 ```
 In other words turn on i2s and turn off the default audio device
+and reboot.
 
+Reference: https://forums.raspberrypi.com/viewtopic.php?t=350269
+sudo apt install linux-headers
+
+References:
+https://github.com/OpenVoiceOS/VocalFusionDriver/tree/main
+https://github.com/OpenVoiceOS/ovos-image-arch-recipe/blob/master/docker_overlay/overlays/03_sj201/setup_sj201.sh
+https://github.com/xmos/vocalfusion-rpi-setup/blob/master/setup.sh
+cd
+git clone https://github.com/OpenVoiceOS/VocalFusionDriver.git
+cd VocalFusionDriver
+sudo cp xvf3510.dtbo /boot/overlays
+cd driver
+make all
+sudo mkdir /lib/modules/6.1.21-v8+/kernel/drivers/vocalfusion
+sudo cp vocalfusion* /lib/modules/6.1.21-v8+/kernel/drivers/vocalfusion
+sudo depmod 6.1.21-v8+ -a
+modinfo -k 6.1.21-v8+ vocalfusion-soundcard
+
+Should show:
+```
+filename:       /lib/modules/6.1.21-v8+/kernel/drivers/vocalfusion/vocalfusion-soundcard.ko
+alias:          platform:vocalfusion-soundcard
+license:        GPL v2
+author:         OpenVoiceOS
+description:    XMOS VocalFusion I2S Driver
+srcversion:     BD3D235129B2BE11A13B7A6
+alias:          of:N*T*Cvocalfusion-soundcardC*
+alias:          of:N*T*Cvocalfusion-soundcard
+depends:
+name:           vocalfusion_soundcard
+vermagic:       6.1.21-v8+ SMP preempt mod_unload modversions aarch64
+```
+
+sudo dtoverlay xvf3510
+
+aplay -l
+```
+Should now include the xmos/vocalfusion device:
+**** List of PLAYBACK Hardware Devices ****
+card 0: vc4hdmi0 [vc4-hdmi-0], device 0: MAI PCM i2s-hifi-0 [MAI PCM i2s-hifi-0]
+Subdevices: 1/1
+Subdevice #0: subdevice #0
+card 1: vc4hdmi1 [vc4-hdmi-1], device 0: MAI PCM i2s-hifi-0 [MAI PCM i2s-hifi-0]
+Subdevices: 1/1
+Subdevice #0: subdevice #0
+card 2: sndxmosvocalfus [snd_xmos_vocalfusion_card], device 0: simple-card_codec_link snd-soc-dummy-dai-0 [simple-card_codec_link snd-soc-dummy-dai-0]
+Subdevices: 0/1
+Subdevice #0: subdevice #0
+```
+and this should play some White Noise
+`python ./mark-ii-hardware-testing/utils/set_volume_tas5806.py 370;aplay /usr/share/sounds/alsa/Noise.wav`
+
+`sudo vi /boot/config.txt`
+ADD the line:
+```
+dtoverlay=xvf3510
+```
+And you won't have to run dtoverlay after rebooting.
+
+**Unfortunately, now the Touch Screen is not working.**
+`evtest` will show no `raspberrypi-ts` entry.
+
+You must also:
+`sudo vi /boot/config.txt`
+COMMENT the line:
+```
+dtoverlay=vc4-kms-v3d
+```
+In other words turn OFF all other audio devices (HDMI)
+and reboot.
+
+`aplay -l`
+Should now show only one Device:
+```
+**** List of PLAYBACK Hardware Devices ****
+card 0: sndxmosvocalfus [snd_xmos_vocalfusion_card], device 0: simple-card_codec_link snd-soc-dummy-dai-0 [simple-card_codec_link snd-soc-dummy-dai-0]
+Subdevices: 1/1
+Subdevice #0: subdevice #0
+```
+
+
+## Microphone
+
+So far I have NOT made the Microphone work, but maybe I don't need it.
+
+# Set up Orac on this Devices
+Follow instructions to install Dotfiles
+
+Use `syncOrac.sh` to sync code to Pi
+```
+cd ~/Orac/node
+npm ci
+```
+## Make it run on startup, but from GUI so Audio works
+**Note: If a user autostart file exists at /home/pi/.config/lxsession/LXDE-pi, then the System autostart file is totally ignored (for that user).**
+Reference: https://forums.raspberrypi.com/viewtopic.php?t=294014
+`mkdir -p ${HOME}/.config/lxsession/LXDE-pi`
+`cp /etc/xdg/lxsession/LXDE-pi/autostart ${HOME}/.config/lxsession/LXDE-pi/`
+`vi .config/lxsession/LXDE-pi/autostart`
+and add this at the bottom:
+`@/home/chrisl8/Orac/startpm2.sh`
+OR if you want the terminal to open and see it:
+`@lxterminal -e bash /home/chrisl8/Orac/startpm2.sh`
+
+Add: `pm2 log` to the bottom of `startpm2.sh` to prevent if from just shutting down immediately.
+
+
+---
+# Old Information
+
+
+### Grab the Mycroft test code in case you need it
+```
+cd
+git clone git@github.com:MycroftAI/mark-ii-hardware-testing.git
+```
+
+## Possible audio helps from Mycroft code:
 NOTE: I'm not 100% sure whether the above is all I need,  
 as I also edited init_hardware.sh to change /home/pi/venv to /home/chrisl8/venv  
 and then ran:
@@ -90,69 +417,8 @@ cd ${HOME}/mark-ii-hardware-testing
 init_hardware.sh
 ```
 
-### Verify SJ201 board exists and find version
-Reference: https://github.com/MycroftAI/mark-ii-hardware-testing/blob/main/init_hardware.sh
-`sudo apt install i2c-tools` - Note, I found this already installed, so maybe not required?
 
-Reference: https://github.com/MycroftAI/mark-ii-hardware-testing/blob/main/hardware_tests/auto_detect_sj201.py
 
-View all `i2c` devices:
-```
-❯ sudo i2cdetect -a -y 1
-     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
-00: -- -- -- -- 04 -- -- -- -- -- -- -- -- -- -- --
-10: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-20: -- -- -- -- -- -- -- -- -- -- -- -- 2c -- -- 2f
-30: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-40: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-50: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-60: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-70: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-```
-
-tiny_address = "04"
-xmos_address = "2c"
-ti_address = "2f"
-
-"Old" SJ201 has all 3.
-
-View all `spi` devices:
-```
-❯ ls -l /dev/spidev*
-crw-rw---- 1 root spi 153, 0 Feb 28 19:41 /dev/spidev0.0
-crw-rw---- 1 root spi 153, 1 Feb 28 19:41 /dev/spidev0.1
-```
-
-### Test Touchscreen
- - First, the touchscreen SHOULD work in the GUI desktop once SPI and I2C are enabled (I'm not sure which of those two is the key)
- - Install `evtest` and test touchscreen
-   - `sudo apt intall evtest`
-     - Reference: https://github.com/MycroftAI/mark-ii-hardware-testing/blob/main/init_hardware.sh
-   - Run:
-`sudo evtest`
-   - and, device `event0` should look like this:
-     - Reference: https://github.com/MycroftAI/mark-ii-hardware-testing/blob/main/utils/async_touch.py
-```
-/dev/input/event0:      raspberrypi-ts
-```
- - Note that if set up correctly, that is the ONLY device listed apart from possibly any keyboard/mouse you connected.
-   - While without SPI or I2C turned on, you will see an array of devices for some reason, none of which really do anything.
- - Select it, and tap on the screen and it should output all sorts of fun data about touch/release events!
-   - It does multi-finger-tracking, etc.
-
-I'm not sure yet if I'll try to like display an image and track touches on their own (as Mycroft did),  
-or try to use a web browser interface and use the browser touch input.
-For now, just know it works.
-
-### Test fan
-Reference: https://github.com/MycroftAI/mark-ii-hardware-testing/blob/main/hardware_tests/old_fan.py
-
-Hardware speed range is appx 30-255.
-
-`sudo i2cset -a -y 1 0x04 101 0 i # Stop`
-`sudo i2cset -a -y 1 0x04 101 255 i # Full speed`
-
-For some reason we always need `-a` to see 04 both with `i2cdetect` and `i2cset`
 
 ### Test sound driver and speakers
 Reference:
@@ -477,6 +743,9 @@ And to make it start at boot:
 To see logs:
 `journalctl --user -f`
 
+Set your timezone
+`timedatectl set-timezone America/Chicago`
+
 Reboot to test that it starts up.
 
 # Configuration
@@ -550,3 +819,19 @@ smbus: OS maintained it seems, and I don't think anything even uses it
 timezonefinder: https://github.com/NeonGeckoCom/neon-utils/blob/dev/requirements/requirements.txt
 watchdog: https://github.com/OpenVoiceOS/ovos-core/blob/dev/requirements/requirements.txt
 websockets: https://github.com/OpenVoiceOS/ovos-PHAL-plugin-homeassistant/blob/dev/requirements.txt
+
+# Run Dashboard
+TL;DR: It don't work, even after you fix it up.
+
+Update the Dashboard
+```
+cd /usr/local/share
+rm -rf ovos-dashboard
+git clone https://github.com/OpenVoiceOS/OVOS-Dashboard.git
+```
+
+```
+export PYTHON_SYS_SITE_PACKAGES=/usr/lib/python3.10/site-packages
+export PYTHON_USER_SITE_PACKAGES=/home/ovos/.local/lib/python3.10/site-packages
+export MYCROFT_SKILLS_LOCATION=/home/ovos/.config/mycroft/skills
+```

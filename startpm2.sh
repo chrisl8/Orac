@@ -5,3 +5,5 @@ export NVM_DIR="${HOME}/.nvm"
 
 cd "${HOME}/Orac" || exit
 pm2 start "${HOME}/Orac/node/pm2Config.json"
+# If you want the terminal to stay open and show log, use this:
+pm2 log

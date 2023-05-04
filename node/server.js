@@ -1,5 +1,10 @@
 /* eslint-disable no-case-declarations,no-fallthrough,no-await-in-loop */
 import WebSocket from 'ws';
+import os from 'os';
+import { spawn } from 'child_process';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 import getHomeAssistantConfig from './getHomeAssistantConfig.js';
 import webserver from './webserver.js';
 import wait from './wait.js';
@@ -9,12 +14,15 @@ import RobotWebServerData from './robotWebServerData.js';
 import makeRandomNumber from './makeRandomNumber.js';
 import trackedStatusObject from './trackedStatusObject.js';
 import persistentData from './persistentKeyValuePairs.js';
-import MyCroft from './MyCroft.js';
 import HttpRequest from './httpRequest.js';
+import spawnProcess from './spawnProcess.js';
+import speak from './speak.js';
 
-// TODO: Currently we only use Mycroft to SAY stuff, but it would be nice to monitor it and possibly use it to:
-//       Inject actions to do based on input?
-//       Use the screen.
+// https://stackoverflow.com/a/64383997/4982408
+// eslint-disable-next-line no-underscore-dangle
+const __filename = fileURLToPath(import.meta.url);
+// eslint-disable-next-line no-underscore-dangle
+const __dirname = dirname(__filename);
 
 // Dalek One interaction Data
 const robotWebserverData = await RobotWebServerData();
@@ -52,6 +60,7 @@ function getStateFromEventOrState(eventData) {
 
 async function handleEntriesWithEventData(eventData, isInitialData) {
   const state = getStateFromEventOrState(eventData);
+  let testData;
   switch (eventData.entity_id) {
     case 'binary_sensor.basement':
       // Office Motion Sensor
@@ -194,7 +203,7 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
 
         // Do something when the lights come on
         if (!isInitialData && trackedStatusObject.officeLights.on) {
-          MyCroft.sayText('I sense a disturbance in the force.');
+          speak('I sense a disturbance in the force.');
         }
       }
       break;
@@ -209,6 +218,7 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     // When a new one shows up, it will log to the screen until you add it here.
 
     // Car
+    // TODO: Implement these:
     case 'binary_sensor.cooper_s_lids':
     case 'binary_sensor.cooper_s_windows':
     case 'binary_sensor.cooper_s_door_lock_state':
@@ -226,6 +236,10 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'button.cooper_s_deactivate_air_conditioning':
     case 'button.cooper_s_find_vehicle':
     case 'button.cooper_s_refresh_from_cloud':
+      // console.log('Blue Dwarf:');
+      // console.log(eventData);
+      // console.log(state);
+      break;
 
     case 'sensor.unnamed_room_battery':
     case 'binary_sensor.unnamed_room_power':
@@ -453,50 +467,114 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'sensor.wichita_range_extender_info':
     case 'sensor.wichita_range_extender_battery':
     case 'binary_sensor.wichita_range_extender_tamper':
-    case 'sensor.garage_motion_sensor_info':
-    case 'sensor.garage_motion_sensor_battery':
-    case 'binary_sensor.garage_motion_sensor_tamper':
-    case 'binary_sensor.garage_motion_sensor':
-    case 'select.garage_motion_sensor_bypass_mode':
     case 'sensor.back_door_living_room_info':
     case 'sensor.back_door_living_room_battery':
     case 'binary_sensor.back_door_living_room_tamper':
     case 'binary_sensor.back_door_living_room':
     case 'select.back_door_living_room_bypass_mode':
       break;
-    case 'binary_sensor.door_to_garage':
-      // Office Motion Sensor
+
+    // GARAGE
+    // Garage - Motion Sensor
+    case 'sensor.garage_motion_sensor_info':
+    case 'sensor.garage_motion_sensor_battery':
+    case 'binary_sensor.garage_motion_sensor_tamper':
+    case 'select.garage_motion_sensor_bypass_mode':
+      break;
+    case 'binary_sensor.garage_motion_sensor':
+      // Garage Motion Sensor
       if (
         state.newState.hasOwnProperty('state') &&
         state.newState.state === 'on'
       ) {
-        // TODO: Just turn lights on/off as door opens/shuts.
-        // TODO: Only turn off lights if ALL doors are shut
+        await persistentData.set('garageMotionDetected');
+        console.log('Motion detected in Garage.');
+      }
+      break;
+
+    // Garage - Back Door
+    case 'sensor.back_door_garage_info':
+    case 'sensor.back_door_garage_battery':
+    case 'binary_sensor.back_door_garage_tamper':
+    case 'select.back_door_garage_bypass_mode':
+      break;
+    case 'binary_sensor.back_door_garage':
+      if (
+        state.newState.hasOwnProperty('state') &&
+        state.newState.state === 'on'
+      ) {
+        await persistentData.set('backDoorToGarageOpen', true);
+      } else {
+        await persistentData.set('backDoorToGarageOpen', false);
+      }
+      testData = await persistentData.get('backDoorToGarageOpen');
+      console.log(
+        `Back Door To Garage ${testData.value === '1' ? 'OPEN' : 'Closed'}`,
+      );
+      break;
+
+    // Garage - East Door
+    case 'sensor.garage_door_east_info':
+    case 'sensor.garage_door_east_battery':
+    case 'binary_sensor.garage_door_east_tamper':
+    case 'select.garage_door_east_bypass_mode':
+      break;
+    case 'binary_sensor.garage_door_east':
+      if (
+        state.newState.hasOwnProperty('state') &&
+        state.newState.state === 'on'
+      ) {
+        await persistentData.set('eastDoorToGarageOpen', true);
+      } else {
+        await persistentData.set('eastDoorToGarageOpen', false);
+      }
+      testData = await persistentData.get('eastDoorToGarageOpen');
+      console.log(
+        `East Garage Door ${testData.value === '1' ? 'OPEN' : 'Closed'}`,
+      );
+      break;
+
+    // Garage - West Door
+    case 'sensor.garage_door_west_info':
+    case 'sensor.garage_door_west_battery':
+    case 'binary_sensor.garage_door_west_tamper':
+    case 'select.garage_door_west_bypass_mode':
+      break;
+    case 'binary_sensor.garage_door_west':
+      if (
+        state.newState.hasOwnProperty('state') &&
+        state.newState.state === 'on'
+      ) {
+        await persistentData.set('westDoorToGarageOpen', true);
+      } else {
+        await persistentData.set('westDoorToGarageOpen', false);
+      }
+      testData = await persistentData.get('westDoorToGarageOpen');
+      console.log(
+        `West Garage Door ${testData.value === '1' ? 'OPEN' : 'Closed'}`,
+      );
+      break;
+
+    // Garage - Kitchen Door
+    case 'sensor.door_to_garage_info':
+    case 'sensor.door_to_garage_battery':
+    case 'binary_sensor.door_to_garage_tamper':
+    case 'select.door_to_garage_bypass_mode':
+      break;
+    case 'binary_sensor.door_to_garage':
+      if (
+        state.newState.hasOwnProperty('state') &&
+        state.newState.state === 'on'
+      ) {
         await persistentData.set('kitchenDoorToGarageOpen', true);
-        // await HttpRequest({
-        //   url: `http://${dalekOneConnectInfo.ip}/servo/eyeStalk/-1000`,
-        // });
-        // await wait(1000);
-        // await HttpRequest({
-        //   url: `http://${dalekOneConnectInfo.ip}/servo/eyeStalk/1000`,
-        // });
-        // await wait(1000);
-        // await HttpRequest({
-        //   url: `http://${dalekOneConnectInfo.ip}/servo/eyeStalk/0`,
-        // });
-        // await wait(1000);
       } else {
         await persistentData.set('kitchenDoorToGarageOpen', false);
       }
-      const testData = await persistentData.get('kitchenDoorToGarageOpen');
+      testData = await persistentData.get('kitchenDoorToGarageOpen');
       console.log(
         `Kitchen Door To Garage ${testData.value === '1' ? 'OPEN' : 'Closed'}`,
       );
       break;
-    case 'sensor.door_to_garage_battery':
-    case 'sensor.door_to_garage_info':
-    case 'binary_sensor.door_to_garage_tamper':
-    case 'select.door_to_garage_bypass_mode':
 
     // RING Keypads
     // Office RING Keypad
@@ -518,21 +596,6 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'binary_sensor.front_door_tamper':
     case 'binary_sensor.front_door':
     case 'select.front_door_bypass_mode':
-    case 'sensor.back_door_garage_info':
-    case 'sensor.back_door_garage_battery':
-    case 'binary_sensor.back_door_garage_tamper':
-    case 'binary_sensor.back_door_garage':
-    case 'select.back_door_garage_bypass_mode':
-    case 'sensor.garage_door_east_info':
-    case 'sensor.garage_door_east_battery':
-    case 'binary_sensor.garage_door_east_tamper':
-    case 'binary_sensor.garage_door_east':
-    case 'select.garage_door_east_bypass_mode':
-    case 'sensor.garage_door_west_info':
-    case 'sensor.garage_door_west_battery':
-    case 'binary_sensor.garage_door_west_tamper':
-    case 'binary_sensor.garage_door_west':
-    case 'select.garage_door_west_bypass_mode':
     case 'sensor.basement_info':
     case 'sensor.basement_battery':
     case 'binary_sensor.basement_tamper':
@@ -567,16 +630,11 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
       break;
 
     case 'persistent_notification.config_entry_discovery':
-      // This fires when new devices are detected on the network.
-      if (!isInitialData && trackedStatusObject.officeLights.on) {
-        MyCroft.sayText('Something new detected in the ether.');
-      }
       break;
 
     // WLED
     case 'sensor.wled_estimated_current':
     case 'switch.wled_sync_receive':
-    case 'light.wled_master':
     case 'light.wled':
     case 'light.wled_segment_1':
     case 'light.wled_segment_2':
@@ -612,8 +670,11 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'button.wled_restart':
     case 'update.wled_firmware':
       break;
+    case 'light.wled_master':
+      trackedStatusObject.wled.on = state.newState.state === 'on';
+      break;
     case 'sensor.wled_ip':
-      console.log(eventData);
+      trackedStatusObject.wledIp = eventData.state;
       break;
 
     // Automations also fire events!
@@ -700,10 +761,11 @@ function handleWebsocketInput(input) {
     sentRequests.has(input.id)
   ) {
     // Result of a sent request
-    console.log('Request result:');
-    console.log(sentRequests.get(input.id));
-    console.log(`${input.success ? 'Succeeded' : 'Failed'}`);
-    console.log(input.result);
+    console.log(
+      `${sentRequests.get(input.id)}: ${
+        input.success ? 'Succeeded' : 'Failed'
+      }`,
+    );
   } else if (
     input.type === 'event' &&
     input.hasOwnProperty('event') &&
@@ -711,6 +773,7 @@ function handleWebsocketInput(input) {
   ) {
     // Simple events
     switch (input.event.event_type) {
+      case 'call_service':
       case 'hue_event':
       case 'recorder_5min_statistics_generated':
       case 'recorder_hourly_statistics_generated':
@@ -766,8 +829,67 @@ ws.on('message', (data) => {
 // Start web server
 await webserver();
 
+const hasBootedSemaphoreFile = `/tmp/OracFirstStarupAfterBoot`;
+// Things to do ONLY after first boot of device
+await new Promise((resolve) => {
+  fs.readFile(hasBootedSemaphoreFile, async (readFileErr) => {
+    if (readFileErr) {
+      console.log('Initial device boot...');
+      await spawnProcess({ path: `${__dirname}/../pi/scripts/fanOff.sh` });
+      console.log('Fan is OFF');
+      await spawnProcess({ path: `${__dirname}/../pi/scripts/ledsOff.sh` });
+      console.log('LEDs are OFF');
+      await spawnProcess({
+        path: `python`,
+        args: [`${__dirname}/../pi/utils/init_sound_card.py`],
+      });
+      console.log('Sound card is initialized.');
+      const volume = 380;
+      await spawnProcess({
+        path: `python`,
+        args: [`${__dirname}/../pi/utils/set_volume.py`, volume],
+      });
+      console.log(`Volume is set to ${volume}`);
+
+      fs.writeFile(hasBootedSemaphoreFile, 'DONE\n', (writeFileErr) => {
+        if (writeFileErr) {
+          console.error('Error writing first boot file:');
+          console.error(writeFileErr);
+        }
+      });
+    }
+    resolve();
+  });
+});
+
+// Things done on startup
+speak('Hello World');
+
 while (trackedStatusObject.keepRunning) {
   await wait(1000 * 60); // Delay between rechecks
+
+  // Reboot after 2am
+  const upTimeHours = os.uptime() / 60 / 60;
+  const hour = new Date().getHours();
+  if (hour === 2 && upTimeHours > 2) {
+    console.log('Initiating Daily Reboot');
+    const process = spawn('sudo', ['shutdown', `-r`, `now`]);
+    let outputData = '';
+    process.stdout.on('data', (data) => {
+      outputData += data;
+    });
+    process.stderr.on('data', (data) => {
+      console.error(String(data));
+    });
+    process.on('close', (code) => {
+      if (code > 0) {
+        console.error(code);
+      }
+      if (outputData) {
+        console.log(String(outputData));
+      }
+    });
+  }
 
   // Calculate how long the office lights have been on
   const officeLightsOnMinutes =
@@ -880,6 +1002,38 @@ while (trackedStatusObject.keepRunning) {
       pushMe(message);
     }
   }
+
+  // Turn off Dalek lights if all garage doors are closed, and no motion is detected for X minutes\
+  if (trackedStatusObject.wled.on) {
+    console.log('Turning off Dalek lights.');
+    id++;
+    sentRequests.set(id, 'Turning off Dalek lights');
+    ws.send(
+      JSON.stringify({
+        id,
+        type: 'call_service',
+        domain: 'light',
+        service: 'turn_off',
+
+        target: {
+          entity_id: 'light.wled_master',
+        },
+      }),
+    );
+  }
+
+  // await HttpRequest({
+  //   url: `http://${dalekOneConnectInfo.ip}/servo/eyeStalk/-1000`,
+  // });
+  // await wait(1000);
+  // await HttpRequest({
+  //   url: `http://${dalekOneConnectInfo.ip}/servo/eyeStalk/1000`,
+  // });
+  // await wait(1000);
+  // await HttpRequest({
+  //   url: `http://${dalekOneConnectInfo.ip}/servo/eyeStalk/0`,
+  // });
+  // await wait(1000);
 
   // TODO: Notify me if any lights are on after 10pm and no motion in office in a while.
   // TODO: Notify me at 10pm if any sensors in the alarm system are not clear.

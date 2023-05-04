@@ -15,3 +15,6 @@ node_modules/
 .twilioConfig.json5
 .robotWebServer.json5
 database.sqlite
+
+# Website build location
+website/

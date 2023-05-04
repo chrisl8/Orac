@@ -31,6 +31,9 @@ const trackedStatusObject = {
     facing_door: null,
     facing_me: null,
   },
+  wled: {
+    on: false,
+  },
 };
 
 export default trackedStatusObject;

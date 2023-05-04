@@ -29,7 +29,7 @@ const webServerPort = 8080;
 
 async function webserver() {
   /** @namespace robotModel.webServerPort */
-  const webServer = app.listen(webServerPort ? webServerPort : 80);
+  const webServer = app.listen(webServerPort || 80);
   const io = new Server(webServer, {
     cors: {
       origin: 'http://localhost:3000',

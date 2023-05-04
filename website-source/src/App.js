@@ -19,15 +19,12 @@ const App = () => {
     // https://medium.com/@felippenardi/how-to-do-componentdidmount-with-react-hooks-553ba39d1571
 
     // TODO: For Production
-    // const newSocket = openSocket({
-    //   transports: ['websocket'],
-    // });
+    const newSocket = openSocket({
+      transports: ['websocket'],
+    });
     // For local testing on the robot:
     // const newSocket = openSocket(`http://${window.location.hostname}:8080`);
     // For testing on my laptop with remote robot:
-    const newSocket = openSocket(`http://192.168.1.123:8080`, {
-      transports: ['websocket'],
-    });
 
     setSocket(newSocket);
 
@@ -49,7 +46,7 @@ const App = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Base />}>
-            <Route index element={<Home />} />
+            <Route index element={<Home siteDataModel={siteDataModel} />} />
             <Route path="*" element={<p>Page not found.</p>} />
           </Route>
         </Routes>
