@@ -4,6 +4,10 @@ import { Server } from 'socket.io';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import ipAddress from './ipAddress.js';
+import {
+  statusEmitter,
+  trackedStatusObject,
+} from './trackedStatusDataModel.js';
 
 // https://stackoverflow.com/a/64383997/4982408
 const fileName = fileURLToPath(import.meta.url);
@@ -12,24 +16,14 @@ const dirName = dirname(fileName);
 const app = express();
 
 // All web content is housed in the website folder
-app.use(express.static(`${dirName}/../website/live`));
-
-// TODO: Track if a move command HAS come in from a client, has not been zeroed, and they disconnect, so we can stop it.
-
-// TODO: Deal with the case of a GET to move in a direction (as opposed to to a location) that is never stopped (timeout?)
-
-function strippedRobotModel(inputRobotModel) {
-  const copy = { ...inputRobotModel };
-  // Use this to strip out anything the front end shouldn't see.
-  delete copy.cloudServer;
-  return copy;
-}
+app.use(express.static(`${dirName}/../website`));
 
 const webServerPort = 8080;
 
 async function webserver() {
   /** @namespace robotModel.webServerPort */
   const webServer = app.listen(webServerPort || 80);
+  // NOTE: This CORS entry is only required if you want to connect from a dev intance running on "localhost"
   const io = new Server(webServer, {
     cors: {
       origin: 'http://localhost:3000',
@@ -50,25 +44,19 @@ async function webserver() {
     // NOTE: This is debounced at 300ms on the sending end.
     // If that debounce is removed, then be sure to debounce
     // it here!
-    // const emitRobotModelToFrontEnd = () => {
-    //   socket.emit('robotModel', JSON.stringify(strippedRobotModel(robotModel)));
-    // };
-    //
-    // emitRobotModelToFrontEnd();
-    //
-    // robotModelEmitter.on('update', () => {
-    //   emitRobotModelToFrontEnd();
-    // });
-    //
-    // socket.on('servo360', (data) => {
-    //   if (data && data.target && (data.value === 0 || data.value)) {
-    //     operateServo360({ servoName: data.target, value: data.value });
-    //   }
-    // });
+    const emitStatusToFrontEnd = () => {
+      socket.emit('status', JSON.stringify(trackedStatusObject));
+    };
+
+    emitStatusToFrontEnd();
+
+    statusEmitter.on('update', () => {
+      emitStatusToFrontEnd();
+    });
   });
 
   let port = '';
-  if (webServer && webServer !== 80) {
+  if (webServerPort && webServerPort !== 80) {
     port = `:${webServerPort}`;
   }
 

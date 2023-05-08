@@ -1,7 +1,5 @@
 /* eslint-disable no-case-declarations,no-fallthrough,no-await-in-loop */
 import WebSocket from 'ws';
-import os from 'os';
-import { spawn } from 'child_process';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -12,11 +10,11 @@ import pushMe from './pushMe.js';
 import isToday from './dateIsToday.js';
 import RobotWebServerData from './robotWebServerData.js';
 import makeRandomNumber from './makeRandomNumber.js';
-import trackedStatusObject from './trackedStatusObject.js';
 import persistentData from './persistentKeyValuePairs.js';
 import HttpRequest from './httpRequest.js';
 import spawnProcess from './spawnProcess.js';
 import speak from './speak.js';
+import { trackedStatusObject } from './trackedStatusDataModel.js';
 
 // https://stackoverflow.com/a/64383997/4982408
 // eslint-disable-next-line no-underscore-dangle
@@ -729,9 +727,7 @@ function handleWebsocketInput(input) {
     input.event.data.hasOwnProperty('name')
   ) {
     // Automation Triggered
-    console.log(
-      `Home Assistant Automation Triggered: ${input.event.data.name}`,
-    );
+    console.log(`HA Automation: ${input.event.data.name}`);
     // If we want to see more info on these automations, add more console logs
     // or if we want to act on these in some way, add a full on function with a switch case.
   } else if (
@@ -779,10 +775,12 @@ function handleWebsocketInput(input) {
       case 'recorder_hourly_statistics_generated':
       case 'lovelace_updated':
       case 'entity_registry_updated':
+      case 'persistent_notifications_updated':
+      case 'config_entry_discovered':
         // I think entity_registry_updated happens when a lovelace card is updated.
         break;
       default:
-        console.log(`Unknown Home Assistant Event: ${input.event.event_type}`);
+        console.log(`Unknown HA Event: ${input.event.event_type}`);
     }
   } else {
     console.log('Unknown Websocket input type from Home Assistant:');
@@ -868,28 +866,13 @@ speak('Hello World');
 while (trackedStatusObject.keepRunning) {
   await wait(1000 * 60); // Delay between rechecks
 
-  // Reboot after 2am
-  const upTimeHours = os.uptime() / 60 / 60;
-  const hour = new Date().getHours();
-  if (hour === 2 && upTimeHours > 2) {
-    console.log('Initiating Daily Reboot');
-    const process = spawn('sudo', ['shutdown', `-r`, `now`]);
-    let outputData = '';
-    process.stdout.on('data', (data) => {
-      outputData += data;
-    });
-    process.stderr.on('data', (data) => {
-      console.error(String(data));
-    });
-    process.on('close', (code) => {
-      if (code > 0) {
-        console.error(code);
-      }
-      if (outputData) {
-        console.log(String(outputData));
-      }
-    });
-  }
+  // Reboot after 2am Daily
+  // const upTimeHours = os.uptime() / 60 / 60;
+  // const hour = new Date().getHours();
+  // if (hour === 2 && upTimeHours > 2) {
+  //   console.log('Initiating Daily Reboot');
+  //   await spawnProcess({ path: 'sudo', args: ['shutdown', `-r`, `now`] });
+  // }
 
   // Calculate how long the office lights have been on
   const officeLightsOnMinutes =
@@ -1050,3 +1033,4 @@ while (trackedStatusObject.keepRunning) {
 }
 
 console.error('Orac is shutting down.');
+process.exit(); // Because of the webserver it won't just close on its own.

@@ -391,6 +391,10 @@ OR if you want the terminal to open and see it:
 Add: `pm2 log` to the bottom of `startpm2.sh` to prevent if from just shutting down immediately.
 
 
+## Auto Login
+If the auto-login to GUI quites on you, run `sudo raspi-config` and turn the Auto Login OFF and ON again and reboot and it will fix it.
+System Options->Boot / Auto Login
+
 ---
 # Old Information
 
