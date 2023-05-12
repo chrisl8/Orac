@@ -742,10 +742,35 @@ function handleWebsocketInput(input) {
     Array.isArray(input.event.data.service_data.entity_id)
   ) {
     // Service Called
-    const services = input.event.data.service_data.entity_id.join(' ');
-    console.log(
-      `Service Called: ${input.event.data.domain} ${input.event.data.service} ${services}`,
-    );
+    input.event.data.service_data.entity_id.forEach((service) => {
+      switch (service) {
+        case 'binary_sensor.cooper_s_door_lock_state':
+          if (
+            input.event.data.domain === 'homeassistant' &&
+            input.event.data.service === 'update_entity'
+          ) {
+            console.log('Blue Dwarf telemetry received.');
+          } else {
+            console.log(
+              `HA Service: ${input.event.data.domain} ${input.event.data.service} ${service}`,
+            );
+          }
+          break;
+        case 'scene.office_overhead_normal':
+          if (input.event.data.service === 'turn_on') {
+            console.log('Office Lights set to Normal.');
+          } else {
+            console.log(
+              `HA Service: ${input.event.data.domain} ${input.event.data.service} ${service}`,
+            );
+          }
+          break;
+        default:
+          console.log(
+            `HA Service: ${input.event.data.domain} ${input.event.data.service} ${service}`,
+          );
+      }
+    });
     // If we want to see more info on these automations, add more console logs
     // or if we want to act on these in some way, add a full on function with a switch case.
   } else if (
