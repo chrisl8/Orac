@@ -15,6 +15,54 @@ import HttpRequest from './httpRequest.js';
 import spawnProcess from './spawnProcess.js';
 import speak from './speak.js';
 import { trackedStatusObject } from './trackedStatusDataModel.js';
+import RobotSocketServerSubscriber from './RobotSocketServerSubscriber.js';
+import playWav from './playWav.js';
+
+const messageHandler = (message) => {
+  let oldMessage = false;
+  if (message && message.event) {
+    switch (message.event) {
+      case 'disconnect':
+        console.log('Lost connection to Robot Web Server.');
+        break;
+      case 'connect':
+        console.log('Robot Web Server connected.');
+        break;
+      case 'welcome':
+        console.log('Robot Web Server welcomes you!');
+        break;
+      case 'oldMessage':
+        oldMessage = true;
+      case 'newMessage':
+        if (message.data && message.data.text) {
+          switch (message.data.text.trim().replace(/\.+$/, '').toLowerCase()) {
+            case 'conquer the known universe':
+              pushMe('All your base are belong to us!');
+              break;
+            default:
+              console.log(
+                `${oldMessage ? 'OLD ' : ''}Message from ${
+                  message.data.from
+                }: ${message.data.text}.`,
+              );
+          }
+        } else {
+          console.log(
+            `${oldMessage ? 'OLD' : ''}Message with bad data:`,
+            message,
+          );
+        }
+        break;
+      default:
+        console.log('Unknown data from Robot Web Server:', message);
+    }
+  }
+};
+
+const robotSocketServerSubscriber = new RobotSocketServerSubscriber(
+  messageHandler,
+);
+robotSocketServerSubscriber.start();
 
 // https://stackoverflow.com/a/64383997/4982408
 // eslint-disable-next-line no-underscore-dangle
@@ -27,6 +75,40 @@ const robotWebserverData = await RobotWebServerData();
 const dalekOneConnectInfo = robotWebserverData.find(
   (entry) => entry.name === 'DalekOne',
 );
+
+// TODO: Garage doors should have different sound.
+// TODO: Front door should have special sound.
+// TODO: Windows a different sound too?
+const doorOpenClosedGenericResponse = async ({
+  friendlyName,
+  simplifiedName,
+  state,
+  isInitialData,
+  doorType,
+}) => {
+  const previousState = await persistentData.get(simplifiedName);
+  const previousAnnouncedState =
+    previousState.value === '1' ? 'OPEN' : 'Closed';
+  let announcedState = 'Unknown';
+  let shortFileName;
+  if (state.newState.hasOwnProperty('state') && state.newState.state === 'on') {
+    // Open  State
+    shortFileName = `DoorOpeningMinecraft`;
+    persistentData.set(simplifiedName, true);
+    announcedState = 'OPEN';
+  } else {
+    // Closed State
+    shortFileName = `DoorClosingMinecraft`;
+    persistentData.set(simplifiedName, false);
+    announcedState = 'Closed';
+  }
+  if (!isInitialData && announcedState !== previousAnnouncedState) {
+    if (shortFileName) {
+      playWav({ shortFileName });
+    }
+    console.log(`${friendlyName} ${announcedState}`);
+  }
+};
 
 const sentRequests = new Map();
 
@@ -201,7 +283,7 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
 
         // Do something when the lights come on
         if (!isInitialData && trackedStatusObject.officeLights.on) {
-          speak('I sense a disturbance in the force.');
+          playWav({ shortFileName: 'CastleInTheSky-RobotBeep2c' });
         }
       }
       break;
@@ -237,6 +319,24 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
       // console.log('Blue Dwarf:');
       // console.log(eventData);
       // console.log(state);
+      break;
+
+    // These seem to start when you subscribe to Nabu Casa
+    case 'sensor.internet_time':
+    case 'sensor.time_date':
+    case 'sensor.date':
+    case 'sensor.date_time':
+    case 'sensor.date_time_iso':
+    case 'sensor.date_time_utc':
+    case 'sensor.time':
+    case 'sensor.time_utc':
+      break;
+
+    // I think these come from SONOS speakers
+    case 'number.js_robot_balance':
+    case 'number.dads_rave_balance':
+    case 'number.handles_balance':
+    case 'number.kitchen_balance':
       break;
 
     case 'sensor.unnamed_room_battery':
@@ -276,6 +376,8 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'binary_sensor.ilightshow_entertainment_configuration':
     case 'binary_sensor.ilightshow_ios_entertainment_configuration':
     case 'sensor.tech_dungeon_dimmer_switch_battery_level':
+
+    // Hue bulb scenes
     case 'scene.tech_dungeon_bright':
     case 'scene.tech_dungeon_unity_laser_pallete':
     case 'scene.tech_dungeon_mint_desert':
@@ -300,6 +402,7 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'scene.tech_dungeon_electric_beach':
     case 'scene.tech_dungeon_read':
     case 'scene.office_overhead_some_colors':
+    case 'scene.office_overhead_crocus':
     case 'scene.tech_dungeon_red_dessert':
     case 'media_player.samsung_8_series_55_2':
     case 'light.hue_color_lamp_1_6':
@@ -409,6 +512,139 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'switch.mobile_camera_siren':
     case 'sensor.mobile_camera_last_activity':
     case 'sensor.mobile_camera_last_motion':
+      break;
+
+    // Ring Alarm Doors
+    case 'sensor.back_door_kitchen_info':
+    case 'sensor.back_door_kitchen_battery':
+    case 'binary_sensor.back_door_kitchen_tamper':
+    case 'select.back_door_kitchen_bypass_mode':
+      break;
+    case 'binary_sensor.back_door_kitchen':
+      doorOpenClosedGenericResponse({
+        friendlyName: 'Back Door to Kitchen',
+        simplifiedName: 'kitchenBackDoorOpen',
+        state,
+        isInitialData,
+      });
+      break;
+    case 'sensor.back_door_living_room_info':
+    case 'sensor.back_door_living_room_battery':
+    case 'binary_sensor.back_door_living_room_tamper':
+    case 'select.back_door_living_room_bypass_mode':
+      break;
+    case 'binary_sensor.back_door_living_room':
+      doorOpenClosedGenericResponse({
+        friendlyName: 'Living Room Back Door',
+        simplifiedName: 'livingRoomDoorOpen',
+        state,
+        isInitialData,
+      });
+      break;
+    case 'sensor.kitchen_window_info':
+    case 'sensor.kitchen_window_battery':
+    case 'binary_sensor.kitchen_window_tamper':
+    case 'select.kitchen_window_bypass_mode':
+      break;
+    case 'binary_sensor.kitchen_window':
+      doorOpenClosedGenericResponse({
+        friendlyName: 'Kitchen Window',
+        simplifiedName: 'kitchenWindowOpen',
+        state,
+        isInitialData,
+        doorType: 'window',
+      });
+      break;
+    // Garage - Back Door
+    case 'sensor.back_door_garage_info':
+    case 'sensor.back_door_garage_battery':
+    case 'binary_sensor.back_door_garage_tamper':
+    case 'select.back_door_garage_bypass_mode':
+      break;
+    case 'binary_sensor.back_door_garage':
+      doorOpenClosedGenericResponse({
+        friendlyName: 'Back Door to Garage',
+        simplifiedName: 'backDoorToGarageOpen',
+        state,
+        isInitialData,
+      });
+      break;
+    case 'sensor.front_door_info':
+    case 'sensor.front_door_battery_2':
+    case 'binary_sensor.front_door_tamper':
+    case 'select.front_door_bypass_mode':
+      break;
+    case 'binary_sensor.front_door':
+      doorOpenClosedGenericResponse({
+        friendlyName: 'Front Door',
+        simplifiedName: 'frontDoorOpen',
+        state,
+        isInitialData,
+      });
+      break;
+
+    // Garage - East Door
+    case 'sensor.garage_door_east_info':
+    case 'sensor.garage_door_east_battery':
+    case 'binary_sensor.garage_door_east_tamper':
+    case 'select.garage_door_east_bypass_mode':
+      break;
+    case 'binary_sensor.garage_door_east':
+      doorOpenClosedGenericResponse({
+        friendlyName: 'East Garage Door',
+        simplifiedName: 'eastDoorToGarageOpen',
+        state,
+        isInitialData,
+        doorType: 'garage',
+      });
+      break;
+    // Garage - West Door
+    case 'sensor.garage_door_west_info':
+    case 'sensor.garage_door_west_battery':
+    case 'binary_sensor.garage_door_west_tamper':
+    case 'select.garage_door_west_bypass_mode':
+      break;
+    case 'binary_sensor.garage_door_west':
+      doorOpenClosedGenericResponse({
+        friendlyName: 'West Garage Door',
+        simplifiedName: 'westDoorToGarageOpen',
+        state,
+        isInitialData,
+        doorType: 'garage',
+      });
+      break;
+    // Garage - Kitchen Door
+    case 'sensor.door_to_garage_info':
+    case 'sensor.door_to_garage_battery':
+    case 'binary_sensor.door_to_garage_tamper':
+    case 'select.door_to_garage_bypass_mode':
+      break;
+    case 'binary_sensor.door_to_garage':
+      doorOpenClosedGenericResponse({
+        friendlyName: 'Kitchen Door To Garage',
+        simplifiedName: 'kitchenDoorToGarageOpen',
+        state,
+        isInitialData,
+      });
+      break;
+
+    // GARAGE
+    // Garage - Motion Sensor
+    case 'sensor.garage_motion_sensor_info':
+    case 'sensor.garage_motion_sensor_battery':
+    case 'binary_sensor.garage_motion_sensor_tamper':
+    case 'select.garage_motion_sensor_bypass_mode':
+      break;
+    case 'binary_sensor.garage_motion_sensor':
+      // Garage Motion Sensor
+      if (
+        state.newState.hasOwnProperty('state') &&
+        state.newState.state === 'on'
+      ) {
+        await persistentData.set('garageMotionDetected');
+        console.log('Motion detected in Garage.');
+      }
+      break;
 
     case 'switch.3d_printer_socket_1':
     case 'switch.office_lamp_socket_1':
@@ -457,121 +693,9 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'binary_sensor.wichita_alarm_tamper':
     case 'alarm_control_panel.wichita_alarm':
     case 'switch.wichita_siren':
-    case 'sensor.back_door_kitchen_info':
-    case 'sensor.back_door_kitchen_battery':
-    case 'binary_sensor.back_door_kitchen_tamper':
-    case 'binary_sensor.back_door_kitchen':
-    case 'select.back_door_kitchen_bypass_mode':
     case 'sensor.wichita_range_extender_info':
     case 'sensor.wichita_range_extender_battery':
     case 'binary_sensor.wichita_range_extender_tamper':
-    case 'sensor.back_door_living_room_info':
-    case 'sensor.back_door_living_room_battery':
-    case 'binary_sensor.back_door_living_room_tamper':
-    case 'binary_sensor.back_door_living_room':
-    case 'select.back_door_living_room_bypass_mode':
-      break;
-
-    // GARAGE
-    // Garage - Motion Sensor
-    case 'sensor.garage_motion_sensor_info':
-    case 'sensor.garage_motion_sensor_battery':
-    case 'binary_sensor.garage_motion_sensor_tamper':
-    case 'select.garage_motion_sensor_bypass_mode':
-      break;
-    case 'binary_sensor.garage_motion_sensor':
-      // Garage Motion Sensor
-      if (
-        state.newState.hasOwnProperty('state') &&
-        state.newState.state === 'on'
-      ) {
-        await persistentData.set('garageMotionDetected');
-        console.log('Motion detected in Garage.');
-      }
-      break;
-
-    // Garage - Back Door
-    case 'sensor.back_door_garage_info':
-    case 'sensor.back_door_garage_battery':
-    case 'binary_sensor.back_door_garage_tamper':
-    case 'select.back_door_garage_bypass_mode':
-      break;
-    case 'binary_sensor.back_door_garage':
-      if (
-        state.newState.hasOwnProperty('state') &&
-        state.newState.state === 'on'
-      ) {
-        await persistentData.set('backDoorToGarageOpen', true);
-      } else {
-        await persistentData.set('backDoorToGarageOpen', false);
-      }
-      testData = await persistentData.get('backDoorToGarageOpen');
-      console.log(
-        `Back Door To Garage ${testData.value === '1' ? 'OPEN' : 'Closed'}`,
-      );
-      break;
-
-    // Garage - East Door
-    case 'sensor.garage_door_east_info':
-    case 'sensor.garage_door_east_battery':
-    case 'binary_sensor.garage_door_east_tamper':
-    case 'select.garage_door_east_bypass_mode':
-      break;
-    case 'binary_sensor.garage_door_east':
-      if (
-        state.newState.hasOwnProperty('state') &&
-        state.newState.state === 'on'
-      ) {
-        await persistentData.set('eastDoorToGarageOpen', true);
-      } else {
-        await persistentData.set('eastDoorToGarageOpen', false);
-      }
-      testData = await persistentData.get('eastDoorToGarageOpen');
-      console.log(
-        `East Garage Door ${testData.value === '1' ? 'OPEN' : 'Closed'}`,
-      );
-      break;
-
-    // Garage - West Door
-    case 'sensor.garage_door_west_info':
-    case 'sensor.garage_door_west_battery':
-    case 'binary_sensor.garage_door_west_tamper':
-    case 'select.garage_door_west_bypass_mode':
-      break;
-    case 'binary_sensor.garage_door_west':
-      if (
-        state.newState.hasOwnProperty('state') &&
-        state.newState.state === 'on'
-      ) {
-        await persistentData.set('westDoorToGarageOpen', true);
-      } else {
-        await persistentData.set('westDoorToGarageOpen', false);
-      }
-      testData = await persistentData.get('westDoorToGarageOpen');
-      console.log(
-        `West Garage Door ${testData.value === '1' ? 'OPEN' : 'Closed'}`,
-      );
-      break;
-
-    // Garage - Kitchen Door
-    case 'sensor.door_to_garage_info':
-    case 'sensor.door_to_garage_battery':
-    case 'binary_sensor.door_to_garage_tamper':
-    case 'select.door_to_garage_bypass_mode':
-      break;
-    case 'binary_sensor.door_to_garage':
-      if (
-        state.newState.hasOwnProperty('state') &&
-        state.newState.state === 'on'
-      ) {
-        await persistentData.set('kitchenDoorToGarageOpen', true);
-      } else {
-        await persistentData.set('kitchenDoorToGarageOpen', false);
-      }
-      testData = await persistentData.get('kitchenDoorToGarageOpen');
-      console.log(
-        `Kitchen Door To Garage ${testData.value === '1' ? 'OPEN' : 'Closed'}`,
-      );
       break;
 
     // RING Keypads
@@ -589,11 +713,6 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'binary_sensor.master_bedroom_keypad_tamper':
     case 'number.master_bedroom_keypad_volume':
 
-    case 'sensor.front_door_info':
-    case 'sensor.front_door_battery_2':
-    case 'binary_sensor.front_door_tamper':
-    case 'binary_sensor.front_door':
-    case 'select.front_door_bypass_mode':
     case 'sensor.basement_info':
     case 'sensor.basement_battery':
     case 'binary_sensor.basement_tamper':
@@ -608,11 +727,6 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'binary_sensor.laundry_room_flood_freeze_sensor_tamper':
     case 'binary_sensor.laundry_room_flood_freeze_sensor':
     case 'binary_sensor.laundry_room_flood_freeze_sensor_2':
-    case 'sensor.kitchen_window_info':
-    case 'sensor.kitchen_window_battery':
-    case 'binary_sensor.kitchen_window_tamper':
-    case 'binary_sensor.kitchen_window':
-    case 'select.kitchen_window_bypass_mode':
     case 'number.wichita_base_station_volume':
       break;
 
@@ -680,6 +794,12 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'automation.blue_dwarf_status_updates':
     case 'automation.office_motion_switch_reset':
       break;
+
+    // LCARS
+    case 'input_boolean.lcars_sound':
+    case 'input_boolean.lcars_texture':
+      break;
+
     default:
       console.log(eventData.entity_id);
   }
@@ -727,7 +847,12 @@ function handleWebsocketInput(input) {
     input.event.data.hasOwnProperty('name')
   ) {
     // Automation Triggered
-    console.log(`HA Automation: ${input.event.data.name}`);
+    switch (input.event.data.name) {
+      case 'Blue Dwarf Status Updates':
+        break;
+      default:
+        console.log(`HA Automation: ${input.event.data.name}`);
+    }
     // If we want to see more info on these automations, add more console logs
     // or if we want to act on these in some way, add a full on function with a switch case.
   } else if (
