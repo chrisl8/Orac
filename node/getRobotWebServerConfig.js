@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const configFile = `${__dirname}/../.robotWebServer.json5`;
 
-async function getPushoverConfig() {
+async function getRobotWebServerConfig() {
   let configObject;
   try {
     configObject = await readObjectFromFile(configFile);
@@ -24,4 +24,4 @@ async function getPushoverConfig() {
   return configObject;
 }
 
-export default getPushoverConfig;
+export default getRobotWebServerConfig;
