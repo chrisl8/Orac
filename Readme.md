@@ -12,7 +12,7 @@ Check if:
  - then alert me to charge my watch.
 
 Some events happen on HA. It has its own "automations" but I find them clunky,
-but could i have HA essentially CALL this API instead of polling a LOT?
+but could I have HA essentially CALL this API instead of polling a LOT?
 Or should I just poll A LOT?
 
 If the wall switch in the office is turned off:
@@ -37,7 +37,7 @@ https://github.com/MycroftAI/hardware-mycroft-mark-II/blob/master/mark-II-Rpi-de
 
 The primary information about it is here:
 https://github.com/MycroftAI/hardware-mycroft-mark-II
-but there is a more thorough testing suite that should help guide how to connect to all of the features here:
+but there is a more thorough testing suite that should help guide how to connect to all the features here:
 https://github.com/MycroftAI/mark-ii-hardware-testing
 
 ## Setup
@@ -48,7 +48,7 @@ https://github.com/MycroftAI/mark-ii-hardware-testing
  - Initial boot
    - Write down the IP
  - Configuration
-   - Run `sudo raspi-config` (Note: There is a GUI version of this but it seems to be missing several options.)
+   - Run `sudo raspi-config` (Note: There is a GUI version of this, but it seems to be missing several options.)
      - System Options
        - Set your host name to `orac`
      - Display Options
@@ -135,7 +135,7 @@ Turning on SPI and/or I2C (not sure which) should have allowed touchscreen to wo
 ```
 - Note that if set up correctly, that is the ONLY device listed apart from possibly any keyboard/mouse you connected.
     - While without SPI or I2C turned on, you will see an array of devices for some reason, none of which really do anything.
-- Select it, and tap on the screen and it should output all sorts of fun data about touch/release events!
+- Select it, and tap on the screen, and it should output all sorts of fun data about touch/release events!
     - It does multi-finger-tracking, etc.
 
 I'm not sure yet if I'll try to like display an image and track touches on their own (as Mycroft did),  
@@ -392,7 +392,7 @@ Add: `pm2 log` to the bottom of `startpm2.sh` to prevent if from just shutting d
 
 
 ## Auto Login
-If the auto-login to GUI quites on you, run `sudo raspi-config` and turn the Auto Login OFF and ON again and reboot and it will fix it.
+If the auto-login to GUI quites on you, run `sudo raspi-config` and turn the Auto Login OFF and ON again and reboot, and it will fix it.
 System Options->Boot / Auto Login
 
 ---
@@ -440,7 +440,7 @@ https://github.com/MycroftAI/mark-ii-hardware-testing/blob/main/utils/set_volume
 ### Test microphone array
 
 # Mycroft Dev Kit on OpenVoice Operating System
-Getting all of the hardware to work on a bare install of Raspberry Pi OS wasn't working,
+Getting all the hardware to work on a bare installation of Raspberry Pi OS wasn't working,
 so I tried this OVOS image that runs on the Mycroft Dev Kit and everything works!
 
 This seems to be the way it is released:
@@ -460,7 +460,7 @@ https://openvoiceos.com/
 
 Install image using the Raspberry Pi Imager.
 
-I plugged into Ethernet, so it didn't ask about Wifi or network setup.
+I plugged into Ethernet, so it didn't ask about Wi-Fi or network setup.
 
 Select "No Backend"
 
@@ -569,7 +569,7 @@ https://downloads.openvoiceos.com/images/manjaro/stable/
  - Install image using the Raspberry Pi Imager.
    - Note that it requires at least a 32GB card. 16GB is too small and will appear to just fail to image the card.
  - Insert SD Card and boot up. 
-   - I plugged into Ethernet, so it didn't ask about Wifi or network setup.
+   - I plugged into Ethernet, so it didn't ask about Wi-Fi or network setup.
  - Select "No Backend"
  - Use Default Speech Engines
 
@@ -755,7 +755,7 @@ Reboot to test that it starts up.
 # Configuration
 
 The primary config file seems to be `/etc/mycroft/mycroft.conf`
-See here for all of the defaults and what you can change them to, since the file only has "differences" in it:
+See here for all the defaults and what you can change them to, since the file only has "differences" in it:
 https://github.com/OpenVoiceOS/ovos-config/blob/dev/ovos_config/mycroft.conf
 Edit it and:
  - Add this near the top:
@@ -770,8 +770,8 @@ Mostly instead of `mycroft-` tools use `ovos-` tools.
 
 # Package updating for the Insane
 
-I'm not suggesting this is a good idea, but you can force all of the Python packages to update,
-and force pip to use the latest code from github for OVOS by doing this:
+I'm not suggesting this is a good idea, but you can force all the Python packages to update,
+and force pip to use the latest code from GitHub for OVOS by doing this:
 
  - Be root
 sudo su -
@@ -810,13 +810,13 @@ Noted old stuff and who done it:
 Flask-WTF: https://github.com/flask-extensions/Flask-SimpleLogin/blob/main/pyproject.toml
 more-itertools: https://github.com/OpenVoiceOS/ovos-ocp-files-plugin/blob/dev/requirements.txt
 ovos-lingua-franca: https://github.com/OpenVoiceOS/skill-ovos-homescreen/blob/dev/requirements.txt
-ovos-PHAL-plugin-alsa: Not sure, it seems the github repo shows an older version than pipy?
-ovos-stt-plugin-chromium: Not sure, it seems the github repo shows an older version than pipy?
-ovos-stt-plugin-server: Not sure, it seems the github repo shows an older version than pipy?
-ovos-tts-plugin-mimic: Not sure, it seems the github repo shows an older version than pipy?
+ovos-PHAL-plugin-alsa: Not sure, it seems the GitHub repo shows an older version than pipy?
+ovos-stt-plugin-chromium: Not sure, it seems the GitHub repo shows an older version than pipy?
+ovos-stt-plugin-server: Not sure, it seems the GitHub repo shows an older version than pipy?
+ovos-tts-plugin-mimic: Not sure, it seems the GitHub repo shows an older version than pipy?
 Pillow: https://github.com/OpenVoiceOS/ovos-PHAL-plugin-oauth/blob/dev/requirements.txt
 pyee: https://github.com/MycroftAI/mycroft-messagebus-client/blob/master/requirements.txt
-PyGObject: OS maintained. Also not sure what it is used for.
+PyGObject: OS maintained. Also, not sure what it is used for.
 PyYAML: https://github.com/OpenVoiceOS/ovos-config/blob/dev/requirements/requirements.txt
 qrcode: https://github.com/OpenVoiceOS/ovos-PHAL-plugin-oauth/blob/dev/requirements.txt
 smbus: OS maintained it seems, and I don't think anything even uses it
@@ -825,7 +825,7 @@ watchdog: https://github.com/OpenVoiceOS/ovos-core/blob/dev/requirements/require
 websockets: https://github.com/OpenVoiceOS/ovos-PHAL-plugin-homeassistant/blob/dev/requirements.txt
 
 # Run Dashboard
-TL;DR: It don't work, even after you fix it up.
+TL;DR: It doesn't work, even after you fix it up.
 
 Update the Dashboard
 ```
