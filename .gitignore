@@ -10,6 +10,7 @@ Thumbs.db
 node_modules/
 
 # Configuration Files
+.myConfig.json5
 .homeAssistantConfig.json5
 .pushoverConfig.json5
 .twilioConfig.json5
