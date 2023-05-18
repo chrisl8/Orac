@@ -19,3 +19,6 @@ database.sqlite
 
 # Website build location
 website/
+
+# Sound files that are big and copyrighted
+Sounds/
