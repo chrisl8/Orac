@@ -17,47 +17,7 @@ import speak from './speak.js';
 import { trackedStatusObject } from './trackedStatusDataModel.js';
 import RobotSocketServerSubscriber from './RobotSocketServerSubscriber.js';
 import playWav from './playWav.js';
-
-const messageHandler = (message) => {
-  let oldMessage = false;
-  if (message && message.event) {
-    switch (message.event) {
-      case 'disconnect':
-        console.log('Lost connection to Robot Web Server.');
-        break;
-      case 'connect':
-        console.log('Robot Web Server connected.');
-        break;
-      case 'welcome':
-        console.log('Robot Web Server welcomes you!');
-        break;
-      case 'oldMessage':
-        oldMessage = true;
-      case 'newMessage':
-        if (message.data && message.data.text) {
-          switch (message.data.text.trim().replace(/\.+$/, '').toLowerCase()) {
-            case 'conquer the known universe':
-              pushMe('All your base are belong to us!');
-              break;
-            default:
-              console.log(
-                `${oldMessage ? 'OLD ' : ''}Message from ${
-                  message.data.from
-                }: ${message.data.text}.`,
-              );
-          }
-        } else {
-          console.log(
-            `${oldMessage ? 'OLD' : ''}Message with bad data:`,
-            message,
-          );
-        }
-        break;
-      default:
-        console.log('Unknown data from Robot Web Server:', message);
-    }
-  }
-};
+import messageHandler from './messageHandler.js';
 
 const robotSocketServerSubscriber = new RobotSocketServerSubscriber(
   messageHandler,
