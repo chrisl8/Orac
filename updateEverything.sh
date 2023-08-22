@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2059
 
+echo "DO NOT RUN THIS!"
+
+exit 1
+
 set -e
 
 YELLOW='\033[1;33m'
