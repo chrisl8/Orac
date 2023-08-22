@@ -30,5 +30,6 @@ module.exports = {
     // Modules MUST use extensions
     // https://stackoverflow.com/a/68783000/4982408
     'import/extensions': ['error', 'always'],
+    'consistent-return': 'off',
   },
 };
