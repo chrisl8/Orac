@@ -40,29 +40,92 @@ https://github.com/MycroftAI/hardware-mycroft-mark-II
 but there is a more thorough testing suite that should help guide how to connect to all the features here:
 https://github.com/MycroftAI/mark-ii-hardware-testing
 
-## Setup
+# Setup
 
 ## Raspberry Pi Install and Configuration
  - Use the [Raspberry Pi Imager](https://www.raspberrypi.com/software/) to install Raspberry Pi OS (64-bit)
+   - If you want to, you can use the Config icon (gear) to customize some things:
+     - Set host name to `Orac`
+     - Enable SSH
+       - Add your Key if you want to
+     - Set up my username/password
    - and boot it up, no need to edit anything on the config before first boot
  - Initial boot
-   - Write down the IP
+   - If you set things up above, it should just boot right into xWindows with no password prompt
  - Configuration
-   - Run `sudo raspi-config` (Note: There is a GUI version of this, but it seems to be missing several options.)
-     - System Options
-       - Set your host name to `orac`
-     - Display Options
-       - Disable Screen Blanking (If you like, I do)
-     - Interface Options
-       - Enable SSH
-       - Enable SPI (https://github.com/MycroftAI/mark-ii-hardware-testing)
-       - Enable I2C (https://github.com/MycroftAI/mark-ii-hardware-testing)
-         - One of the two, SPI and/or I2C, makes the touchscreen work, both in `evtest` and in X Windows.
+   - SSH In and
+     - Run `sudo raspi-config` (Note: There is a GUI version of this, but it seems to be missing several options.)
+       - System Options
+         - Wireless LAN - Set to US so it can work (although I'm not using it) 
+           - Then Cancel when asked for an SSID
+         - Set your host name to `Orac` (If you did not already)
+       - Display Options
+         - Disable Screen Blanking (If you like, I do)
+       - Interface Options
+         - Enable SSH (If you did not already)
+         - Enable SPI (https://github.com/MycroftAI/mark-ii-hardware-testing)
+         - Enable I2C (https://github.com/MycroftAI/mark-ii-hardware-testing)
+           - One of the two, SPI and/or I2C, makes the touchscreen work, both in `evtest` and in X Windows.
+     - NOTE: You do **not** need to enable Legacy Camera Mode, and **should not**. It is only required for old Python scripts, such as Mycroft.
+   - Install Dotfiles per Readme instructions and also run updateAllTheThings.sh and reboot.
+   - 
 
-NOTE: You do **not** need to enable Legacy Camera Mode, and **should not**. It is only required for old Python scripts, such as Mycroft.
+## Set up Orac on this Devices
 
-xWindows should just auto-login upon boot.
-SSH in with username/password that you set up.
+Use `syncOrac.sh` to sync code to Pi
+```
+cd ~/Orac/node
+npm ci
+```
+
+### Fix up boot config
+Run `diff ~/Orac/pi/boot/config.txt /boot/config.txt` to see what you need to tweak,  
+then edit or replace `/boot/config.txt` and reboot.
+
+Replace command:
+`sudo cp /home/chrisl8/Orac/pi/boot/config.txt /boot/config.txt`
+
+### Install audio drivers and libraries
+See further down for full information. This is the "quick start"  
+
+```
+cd
+pip install smbus2
+sudo apt install raspberrypi-kernel-headers espeak
+gh repo clone OpenVoiceOS/VocalFusionDriver
+cd VocalFusionDriver
+sudo cp xvf3510.dtbo /boot/overlays
+cd driver
+make all
+sudo mkdir /lib/modules/6.1.21-v8+/kernel/drivers/vocalfusion
+sudo cp vocalfusion* /lib/modules/6.1.21-v8+/kernel/drivers/vocalfusion
+sudo depmod 6.1.21-v8+ -a
+```
+
+Reboot and sound should work.
+
+### Make Orac run on startup, but from GUI so Audio works
+**Note: If a user autostart file exists at /home/pi/.config/lxsession/LXDE-pi, then the System autostart file is totally ignored (for that user).**
+Reference: https://forums.raspberrypi.com/viewtopic.php?t=294014
+```
+mkdir -p ${HOME}/.config/lxsession/LXDE-pi
+cp /etc/xdg/lxsession/LXDE-pi/autostart ${HOME}/.config/lxsession/LXDE-pi/
+vi ~/.config/lxsession/LXDE-pi/autostart
+```
+and add this at the bottom:
+`@/home/chrisl8/Orac/startpm2.sh`
+OR if you want the terminal to open and see it:
+`@lxterminal -e bash /home/chrisl8/Orac/startpm2.sh`
+
+If it isn't already done, add: `pm2 log` to the bottom of `startpm2.sh` to prevent if from just shutting down immediately.
+
+## Auto Login
+If the auto-login to GUI quits on you, run `sudo raspi-config` and turn the Auto Login OFF and ON again and reboot, and it will fix it.
+System Options->Boot / Auto Login
+
+---
+
+# Hardware Information.
 
 ### boot config References
 https://www.raspberrypi.com/documentation/computers/config_txt.html
