@@ -6,7 +6,8 @@
       "max_memory_restart": "500M",
       "watch": "node",
       "merge_logs": true,
-      "exec_interpreter": "node"
+      "exec_interpreter": "node",
+      "log_date_format": "h:mma"
     }
   ]
 }
