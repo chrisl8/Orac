@@ -257,17 +257,26 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     // Basically here are ALL the known events/sensors, so jump in and use one.
     // When a new one shows up, it will log to the screen until you add it here.
 
+    // Electric Bill
+    case 'sensor.8302_limerick_st_period':
+    case 'sensor.8302_limerick_st_total_bill_date':
+    case 'sensor.8302_limerick_st_usage_today':
+    case 'sensor.8302_limerick_st_demand':
+    case 'sensor.8302_limerick_st_average_demand':
+    case 'sensor.8302_limerick_st_peak_demand':
+    case 'sensor.8302_limerick_st_peak_time':
+    case 'sensor.8302_limerick_st_max_temp':
+    case 'sensor.8302_limerick_st_min_temp':
+    case 'sensor.8302_limerick_st_average_temp':
+    case 'sensor.8302_limerick_st_cost_today':
+    case 'sensor.8302_limerick_st_balance':
+    case 'sensor.8302_limerick_st_address':
+    case 'sensor.8302_limerick_st_bill_amount':
+    case 'sensor.8302_limerick_st_is_past_due':
+      break;
+
     // Car
-    // TODO: Implement these:
-    case 'binary_sensor.cooper_s_lids':
-    case 'binary_sensor.cooper_s_windows':
-    case 'binary_sensor.cooper_s_door_lock_state':
-    case 'binary_sensor.cooper_s_condition_based_services':
-    case 'binary_sensor.cooper_s_check_control_messages':
-    case 'lock.cooper_s_lock':
     case 'sensor.cooper_s_remaining_range_total':
-    case 'sensor.cooper_s_mileage':
-    case 'sensor.cooper_s_remaining_fuel':
     case 'sensor.cooper_s_remaining_range_fuel':
     case 'sensor.cooper_s_remaining_fuel_percent':
     case 'button.cooper_s_flash_lights':
@@ -280,6 +289,60 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
       // console.log(eventData);
       // console.log(state);
       break;
+    case 'binary_sensor.cooper_s_condition_based_services':
+      console.log(`Blue Dwarf VIN is ${eventData.attributes.vin}`);
+      console.log(`Blue Dwarf Engine Oil is ${eventData.attributes.oil}`);
+      console.log(
+        `Blue Dwarf next Oil Change is on ${eventData.attributes.oil_date}`,
+      );
+      console.log(
+        `Blue Dwarf next Oil Change is at ${eventData.attributes.oil_distance} miles.`,
+      );
+      console.log(
+        `Blue Dwarf vehicle service check is ${eventData.attributes.vehicle_check}`,
+      );
+      console.log(
+        `Blue Dwarf next vehicle Service Check date is ${eventData.attributes.vehicle_check_date}`,
+      );
+      console.log(
+        `Blue Dwarf next vehicle Service Check is at ${eventData.attributes.vehicle_check_distance} miles.`,
+      );
+      console.log(
+        `Blue Dwarf Brake Fluid is ${eventData.attributes.brake_fluid}`,
+      );
+      console.log(
+        `Blue Dwarf next Brake Fluid check is ${eventData.attributes.brake_fluid_date}`,
+      );
+      break;
+    case 'binary_sensor.cooper_s_check_control_messages':
+      console.log(
+        `Blue Dwarf Engine Oil is ${
+          eventData.state === 'off' ? 'NOT ' : ' '
+        }low.`,
+      );
+      break;
+    case 'binary_sensor.cooper_s_door_lock_state':
+      console.log(
+        `Blue Dwarf all Doors are ${
+          eventData.state === 'off' ? 'Locked.' : 'UNlocked!'
+        }`,
+      );
+      break;
+    case 'lock.cooper_s_lock':
+      console.log(
+        `Blue Dwarf all Doors are ${
+          eventData.state === 'locked' ? 'Locked.' : 'UNlocked!'
+        }`,
+      );
+      break;
+    // TODO: Test these as clearly some might mean something less obvious like boot vs hood vs top.
+    // TODO: Notify if car is unlocked.
+    // TODO: Record other data of interest.
+    // TODO: Notify on other possible issues?
+    // console.log('Blue Dwarf:');
+    // console.log(eventData.entity_id);
+    // console.log(eventData.attributes);
+    // console.log(eventData.state);
 
     // These seem to start when you subscribe to Nabu Casa
     case 'sensor.internet_time':
@@ -365,6 +428,7 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'scene.office_overhead_crocus':
     case 'scene.tech_dungeon_red_dessert':
     case 'media_player.samsung_8_series_55_2':
+    case 'remote.samsung_8_series_55':
     case 'light.hue_color_lamp_1_6':
     case 'light.hue_color_lamp_1_2':
     case 'light.hue_color_lamp_1_3':
@@ -673,6 +737,16 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'binary_sensor.master_bedroom_keypad_tamper':
     case 'number.master_bedroom_keypad_volume':
 
+    // Philips Hue keypads:
+    case 'event.office_dimmer_switch_button_1':
+    case 'event.office_dimmer_switch_button_2':
+    case 'event.office_dimmer_switch_button_3':
+    case 'event.office_dimmer_switch_button_4':
+    case 'event.tech_dungeon_dimmer_switch_button_1':
+    case 'event.tech_dungeon_dimmer_switch_button_2':
+    case 'event.tech_dungeon_dimmer_switch_button_3':
+    case 'event.tech_dungeon_dimmer_switch_button_4':
+
     case 'sensor.basement_info':
     case 'sensor.basement_battery':
     case 'binary_sensor.basement_tamper':
@@ -695,6 +769,8 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'device_tracker.blesmart_0000015f005fbf99df24':
     case 'sensor.blesmart_0000015f005fbf99df24_estimated_distance':
     case 'device_tracker.rivian_phone_key_ee35':
+    case 'device_tracker.rivian_sensor_4_def8':
+    case 'sensor.rivian_sensor_4_def8_estimated_distance':
     case 'sensor.rivian_phone_key_ee35_estimated_distance':
       if (!isInitialData) {
         console.log(eventData);
@@ -889,6 +965,15 @@ function handleWebsocketInput(input) {
       case 'config_entry_discovered':
         // I think entity_registry_updated happens when a lovelace card is updated.
         break;
+      case 'homeassistant_started':
+        console.log('Home Assistant just started.');
+        break;
+      case 'core_config_updated':
+        console.log('Home Assistant CORE Config updated.');
+        break;
+      case 'homeassistant_stop':
+        console.log('Home Assistant going down!');
+        break;
       default:
         console.log(`Unknown HA Event: ${input.event.event_type}`);
     }
@@ -977,6 +1062,7 @@ while (trackedStatusObject.keepRunning) {
   await wait(1000 * 60); // Delay between rechecks
 
   // Reboot after 2am Daily
+  // NOTE: Not doing this, as there is no need and it causes unneeded churn and noise.
   // const upTimeHours = os.uptime() / 60 / 60;
   // const hour = new Date().getHours();
   // if (hour === 2 && upTimeHours > 2) {
