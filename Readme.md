@@ -1,5 +1,11 @@
 TODO:
 
+2. Notify if car doors are not locked.
+3. Notify if lights are on or doors open after certain time of day.
+2. Keep list of tasks to remind me to do until I've done them, with speech, pushover and lights.
+3. Enable finding items by searching obsidian documents.
+4. IF it looses track of me sometimes, use devices (like car) to override current isHome status when received, if they are far away.
+
 Alert me when watch is fully charged, so I can put it back on.
 
 Check if:
@@ -431,32 +437,6 @@ Subdevice #0: subdevice #0
 ## Microphone
 
 So far I have NOT made the Microphone work, but maybe I don't need it.
-
-# Set up Orac on this Devices
-Follow instructions to install Dotfiles
-
-Use `syncOrac.sh` to sync code to Pi
-```
-cd ~/Orac/node
-npm ci
-```
-## Make it run on startup, but from GUI so Audio works
-**Note: If a user autostart file exists at /home/pi/.config/lxsession/LXDE-pi, then the System autostart file is totally ignored (for that user).**
-Reference: https://forums.raspberrypi.com/viewtopic.php?t=294014
-`mkdir -p ${HOME}/.config/lxsession/LXDE-pi`
-`cp /etc/xdg/lxsession/LXDE-pi/autostart ${HOME}/.config/lxsession/LXDE-pi/`
-`vi .config/lxsession/LXDE-pi/autostart`
-and add this at the bottom:
-`@/home/chrisl8/Orac/startpm2.sh`
-OR if you want the terminal to open and see it:
-`@lxterminal -e bash /home/chrisl8/Orac/startpm2.sh`
-
-Add: `pm2 log` to the bottom of `startpm2.sh` to prevent if from just shutting down immediately.
-
-
-## Auto Login
-If the auto-login to GUI quites on you, run `sudo raspi-config` and turn the Auto Login OFF and ON again and reboot, and it will fix it.
-System Options->Boot / Auto Login
 
 ---
 # Old Information
