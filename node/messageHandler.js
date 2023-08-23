@@ -1,5 +1,7 @@
 import speak from './speak.js';
 import pushMe from './pushMe.js';
+import trackedStatusObject from './trackedStatusObject.js';
+import taskListObject from './taskListObject.js';
 
 const messageHandler = (message) => {
   let oldMessage = false;
@@ -22,17 +24,39 @@ const messageHandler = (message) => {
           switch (message.data.type) {
             case 'location':
               console.log(message.data);
+              if (message.data.location === 'home') {
+                if (
+                  message.data.action === 'arrived' &&
+                  !trackedStatusObject.userLocation.isHome
+                ) {
+                  trackedStatusObject.userLocation.enteredHomeRadius = true;
+                }
+                if (
+                  message.data.action === 'left' &&
+                  trackedStatusObject.userLocation.isHome
+                ) {
+                  trackedStatusObject.userLocation.enteredHomeRadius = false;
+                  trackedStatusObject.userLocation.isHome = false;
+                  pushMe(`Bye. :'(`);
+                }
+              }
               break;
             case 'text':
               if (message.data && message.data.text) {
-                switch (
-                  message.data.text.trim().replace(/\.+$/, '').toLowerCase()
-                ) {
+                const cleanMessageText = message.data.text
+                  .trim()
+                  .replace(/\.+$/, '')
+                  .toLowerCase();
+                switch (cleanMessageText) {
                   case 'conquer the known universe':
                     speak('All your base are belong to us!');
                     pushMe('All your base are belong to us!');
                     break;
                   default:
+                    if (cleanMessageText.includes('complete')) {
+                      for (let [key, value] of Object.entries(taskListObject)) {
+                      }
+                    }
                     console.log(
                       `${oldMessage ? 'OLD ' : ''}Message from ${
                         message.data.from

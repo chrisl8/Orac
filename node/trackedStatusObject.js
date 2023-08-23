@@ -8,6 +8,7 @@ const trackedStatusObject = {
     lastChargingDoneMessageSent: null,
   },
   userLocation: {
+    enteredHomeRadius: false,
     isHome: true, // Assume is home until we know otherwise
     trackedDevices: {
       christens_apple_watch: 'home', // Always default to home if not known yet.
@@ -34,6 +35,7 @@ const trackedStatusObject = {
   wled: {
     on: false,
   },
+  trellisButtons: [],
 };
 
 export default trackedStatusObject;

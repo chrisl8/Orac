@@ -18,6 +18,8 @@ import { trackedStatusObject } from './trackedStatusDataModel.js';
 import RobotSocketServerSubscriber from './RobotSocketServerSubscriber.js';
 import playWav from './playWav.js';
 import messageHandler from './messageHandler.js';
+import taskListObject from './taskListObject.js';
+import trellis from './trellis.js';
 
 const robotSocketServerSubscriber = new RobotSocketServerSubscriber(
   messageHandler,
@@ -35,6 +37,82 @@ const robotWebserverData = await RobotWebServerData();
 const dalekOneConnectInfo = robotWebserverData.find(
   (entry) => entry.name === 'DalekOne',
 );
+
+let trellisInputCache = '';
+const handleTrellisInput = async (input) => {
+  trellisInputCache += input.replaceAll(/\s/g, '');
+
+  if (trellisInputCache.includes(']')) {
+    // In the case that we have multiple bits joined together, break them apart
+    // and save the rest for later.
+    let trellisInputWorkingCopy = trellisInputCache;
+    const testForOverlap = trellisInputWorkingCopy.split(']');
+    if (testForOverlap.length > 1 && testForOverlap[1]) {
+      // Put the split bit back on.
+      trellisInputWorkingCopy = `${testForOverlap[0]}]`;
+      // Save the rest for later.
+      trellisInputCache = '';
+      for (let i = 1; i < testForOverlap.length; i++) {
+        if (testForOverlap[i]) {
+          trellisInputCache += testForOverlap[i];
+          if (testForOverlap.length > i + 1) {
+            trellisInputCache += ']';
+          }
+        }
+      }
+    } else {
+      trellisInputCache = '';
+    }
+
+    if (trellisInputWorkingCopy.includes(':')) {
+      const trellisCommand = trellisInputWorkingCopy.split(':')[0];
+      const trellisData = trellisInputWorkingCopy.split(':')[1];
+      if (trellisData) {
+        const trellisDataJsonRepresentation = `{"${trellisCommand}":${trellisData}}`;
+        let trellisJsonData;
+        try {
+          trellisJsonData = JSON.parse(trellisDataJsonRepresentation);
+        } catch (e) {
+          console.error(`Error parsing Trellis input:`);
+          console.error(trellisDataJsonRepresentation);
+        }
+        if (trellisCommand && trellisJsonData) {
+          if (trellisCommand === 'Released') {
+            const button = trellisJsonData.Released[0];
+            console.log(`Button ${button} cleared.`);
+            for (const [key, value] of Object.entries(taskListObject)) {
+              if (value.trellisButton === button) {
+                const lastDone = await persistentData.get(
+                  `${key}-LastDoneTime`,
+                );
+                const lastReminder = await persistentData.get(
+                  `${key}-LastReminderTime`,
+                );
+                // Don't do anything if this was already done today
+                // Or if there was no reminder yet today (wrong button?)
+                if (
+                  isToday(new Date(lastReminder.timestamp)) &&
+                  !isToday(new Date(lastDone.timestamp))
+                ) {
+                  persistentData.set(`${key}-LastDoneTime`);
+                  console.log(`${key} has been completed.`);
+                  if (trackedStatusObject.officeLights.on && value.speakDone) {
+                    speak(value.speakDone);
+                  }
+                }
+              }
+            }
+          } else if (trellisCommand === 'LitButtons') {
+            trackedStatusObject.trellisButtons = trellisData;
+          }
+        }
+      }
+    }
+    console.log('');
+  }
+};
+
+await trellis.init(handleTrellisInput);
 
 // TODO: Garage doors should have different sound.
 // TODO: Front door should have special sound.
@@ -56,6 +134,17 @@ const doorOpenClosedGenericResponse = async ({
     shortFileName = `DoorOpeningMinecraft`;
     persistentData.set(simplifiedName, true);
     announcedState = 'OPEN';
+
+    // Use door opening after arrived in home area to mark as home.
+    if (
+      !trackedStatusObject.userLocation.isHome &&
+      trackedStatusObject.userLocation.enteredHomeRadius
+    ) {
+      trackedStatusObject.userLocation.isHome = true;
+      trackedStatusObject.userLocation.enteredHomeRadius = false;
+      //pushMe(`${userIsHome ? 'Welcome home!' : "Bye. :'("}.`);
+      pushMe(`Welcome home!`);
+    }
   } else {
     // Closed State
     shortFileName = `DoorClosingMinecraft`;
@@ -194,7 +283,7 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
       ) {
         trackedStatusObject.userLocation.trackedDevices[trackingDeviceName] =
           state.newState.state;
-      } else {
+      } else if (!isInitialData) {
         console.log(
           `Not using ${state.newState.attributes.friendly_name} location '${state.newState.state}' to track user's location.`,
         );
@@ -285,9 +374,46 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'button.cooper_s_deactivate_air_conditioning':
     case 'button.cooper_s_find_vehicle':
     case 'button.cooper_s_refresh_from_cloud':
-      // console.log('Blue Dwarf:');
-      // console.log(eventData);
-      // console.log(state);
+      break;
+    case 'sensor.cooper_s_mileage':
+      console.log(`Blue Dwarf has ${eventData.state} miles.`);
+      // TODO: Record this somewhere just to keep track of for no reason.
+      // TODO: Also record VIN and other details.
+      break;
+    case 'sensor.cooper_s_remaining_fuel':
+      console.log(
+        `Blue Dwarf has ${eventData.state} gallons of fuel remaining.`,
+      );
+      // TODO: Notify via push if low.
+      break;
+    case 'binary_sensor.cooper_s_lids':
+      // TODO: Alert me if something is not
+      console.log(
+        `Blue Dwarf Driver Door is ${eventData.attributes.leftFront}.`,
+      );
+      console.log(
+        `Blue Dwarf Passenger Door is ${eventData.attributes.rightFront}.`,
+      );
+      console.log(`Blue Dwarf Hood is ${eventData.attributes.hood}.`);
+      console.log(`Blue Dwarf Trunk is ${eventData.attributes.trunk}.`);
+      break;
+    case 'binary_sensor.cooper_s_windows':
+      // TODO: Alert if not
+      let windowOpen = false;
+      for (const window of [
+        'leftFront',
+        'leftRear', // I think this is wrong and always reads open
+        'rightFront',
+        'rightRear', // I think this is wrong and always reads open
+      ]) {
+        if (eventData.attributes[window] !== 'CLOSED') {
+          console.log(`Blue Dwarf ${window} is OPEN!`);
+          windowOpen = true;
+        }
+      }
+      if (!windowOpen) {
+        console.log('Blue Dwarf All Windows CLOSED.');
+      }
       break;
     case 'binary_sensor.cooper_s_condition_based_services':
       console.log(`Blue Dwarf VIN is ${eventData.attributes.vin}`);
@@ -1091,6 +1217,40 @@ while (trackedStatusObject.keepRunning) {
     );
   }
 
+  // Task Reminders
+  for (const [key, value] of Object.entries(taskListObject)) {
+    const lastDone = await persistentData.get(`${key}-LastDoneTime`);
+    const lastReminder = await persistentData.get(`${key}-LastReminderTime`);
+    const lastReminderMinutesAgo =
+      (new Date().getTime() - lastReminder.timestamp) / 1000 / 60;
+    // Daily
+    if (value.interval === 'daily') {
+      // Check timestamp
+      if (
+        !isToday(new Date(lastDone.timestamp)) &&
+        new Date().getHours() >= value.reminderAfterHour &&
+        (new Date().getMinutes() >= value.reminderAfterMinute ||
+          new Date().getHours() > value.reminderAfterHour)
+      ) {
+        // Light Trellis buttons
+        trellis.writetoSerialPort(
+          `<${value.trellisButton}:${value.trellisButtonColor[0]},${value.trellisButtonColor[1]},${value.trellisButtonColor[2]}>`,
+        );
+
+        // Send Reminders
+        if (lastReminderMinutesAgo > value.repeatInterval) {
+          // First update last Reminder Sent time in database
+          await persistentData.set(`${key}-LastReminderTime`);
+          console.log(value.message);
+          pushMe(value.message);
+          if (trackedStatusObject.officeLights.on && value.speakDo) {
+            speak(value.speakDo);
+          }
+        }
+      }
+    }
+  }
+
   const currentHour = new Date().getHours();
   const currentMinute = new Date().getMinutes();
   // Send Charge Watch notice
@@ -1135,8 +1295,10 @@ while (trackedStatusObject.keepRunning) {
     const lastOfficeMotionDetectedMinutesAgo =
       (new Date().getTime() - officeMotionDetected.timestamp) / 1000 / 60;
     if (lastOfficeMotionDetectedMinutesAgo > turnOffOfficeLightsAfterMinutes) {
-      console.log('Turning off office lights due to inactivity.');
+      const taskName = 'Turning off office lights due to inactivity.';
+      console.log(taskName);
       id++;
+      sentRequests.set(id, taskName);
       ws.send(
         JSON.stringify({
           id,
@@ -1184,9 +1346,10 @@ while (trackedStatusObject.keepRunning) {
 
   // Turn off Dalek lights if all garage doors are closed, and no motion is detected for X minutes\
   if (trackedStatusObject.wled.on) {
-    console.log('Turning off Dalek lights.');
+    const taskName = 'Turning off Dalek lights.';
+    console.log(taskName);
     id++;
-    sentRequests.set(id, 'Turning off Dalek lights');
+    sentRequests.set(id, taskName);
     ws.send(
       JSON.stringify({
         id,
