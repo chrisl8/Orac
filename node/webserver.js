@@ -23,10 +23,10 @@ const webServerPort = 8080;
 async function webserver() {
   /** @namespace robotModel.webServerPort */
   const webServer = app.listen(webServerPort || 80);
-  // NOTE: This CORS entry is only required if you want to connect from a dev intance running on "localhost"
+  // NOTE: This CORS entry is only required if you want to connect from a dev instance running on "localhost"
   const io = new Server(webServer, {
     cors: {
-      origin: 'http://localhost:3000',
+      origin: 'http://localhost:5173',
       methods: ['GET', 'POST'],
     },
   });
