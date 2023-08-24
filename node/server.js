@@ -961,7 +961,7 @@ function handleWebsocketInput(input) {
     input.success === true &&
     input.result === null
   ) {
-    console.log('Home Assistant initial connect validated.');
+    console.log('Home Assistant connection validated.');
   } else if (input.type === 'pong') {
     // Server is responding
     trackedStatusObject.lastPong = new Date();
