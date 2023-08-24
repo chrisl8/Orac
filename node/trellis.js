@@ -31,13 +31,17 @@ function writeToSerialPort(text) {
   if (port) {
     port.write(text, (err) => {
       if (err) {
-        return console.log('Error on write: ', err.message);
+        console.error('Trellis error on write: ', err.message);
       }
     });
   }
 }
 
-export default { init, writetoSerialPort: writeToSerialPort };
+const toggleButton = ({ button, color }) => {
+  writeToSerialPort(`<${button}:${color[0]},${color[1]},${color[2]}>`);
+};
+
+export default { init, writeToSerialPort, toggleButton };
 
 if (esMain(import.meta)) {
   await init(console.log);

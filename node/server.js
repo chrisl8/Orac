@@ -1220,9 +1220,14 @@ while (trackedStatusObject.keepRunning) {
           new Date().getHours() > value.reminderAfterHour)
       ) {
         // Light Trellis buttons
-        trellis.writetoSerialPort(
-          `<${value.trellisButton}:${value.trellisButtonColor[0]},${value.trellisButtonColor[1]},${value.trellisButtonColor[2]}>`,
-        );
+        trellis.toggleButton({
+          button: value.trellisButton,
+          color: [
+            value.trellisButtonColor[0],
+            value.trellisButtonColor[1],
+            value.trellisButtonColor[2],
+          ],
+        });
 
         // Send Reminders
         if (lastReminderMinutesAgo > value.repeatInterval) {
