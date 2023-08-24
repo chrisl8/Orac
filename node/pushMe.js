@@ -5,17 +5,20 @@ import getPushoverConfig from './getPushoverConfig.js';
 
 const configObject = await getPushoverConfig();
 
-function pushMe(text) {
-  const p = new Push({
-    user: configObject.USER,
-    token: configObject.TOKEN,
-  });
-  const msg = {
-    message: text,
-    // sound: personalData.pushover.sound,
-    // priority: -1,
-  };
-  p.send(msg); // Silent with no error reporting
+function pushMe(text, ttl = 60 * 10) {
+  if (text) {
+    const p = new Push({
+      user: configObject.USER,
+      token: configObject.TOKEN,
+    });
+    const msg = {
+      message: text,
+      ttl,
+      // sound: personalData.pushover.sound,
+      // priority: -1,
+    };
+    p.send(msg); // Silent with no error reporting
+  }
 }
 
 export default pushMe;
