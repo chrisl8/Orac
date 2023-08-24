@@ -1234,7 +1234,7 @@ while (trackedStatusObject.keepRunning) {
           // First update last Reminder Sent time in database
           await persistentData.set(`${key}-LastReminderTime`);
           console.log(value.message);
-          pushMe(value.message);
+          pushMe(value.message, value.pushoverExpirationTime);
           if (trackedStatusObject.officeLights.on && value.speakDo) {
             speak(value.speakDo);
           }
