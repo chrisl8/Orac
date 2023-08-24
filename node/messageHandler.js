@@ -1,6 +1,7 @@
 import speak from './speak.js';
 import pushMe from './pushMe.js';
 import trackedStatusObject from './trackedStatusObject.js';
+import taskHandler from './taskHandler.js';
 import taskListObject from './taskListObject.js';
 
 const messageHandler = (message) => {
@@ -47,39 +48,33 @@ const messageHandler = (message) => {
                   .trim()
                   .replace(/\.+$/, '')
                   .toLowerCase();
-                switch (cleanMessageText) {
-                  case 'conquer the known universe':
-                    speak('All your base are belong to us!');
-                    pushMe('All your base are belong to us!');
-                    break;
-                  default:
-                    if (cleanMessageText.includes('complete')) {
-                      for (let [key, value] of Object.entries(taskListObject)) {
+                if (cleanMessageText.includes('conquer the known universe')) {
+                  speak('All your base are belong to us!');
+                  pushMe('All your base are belong to us!');
+                } else if (cleanMessageText.includes('done')) {
+                  for (const [key, value] of Object.entries(taskListObject)) {
+                    value.completedTexts.forEach((entry) => {
+                      if (cleanMessageText.includes(entry)) {
+                        taskHandler.completed(key);
                       }
-                    }
-                    console.log(
-                      `${oldMessage ? 'OLD ' : ''}Message from ${
-                        message.data.from
-                      }: ${message.data.text}.`,
-                    );
+                    });
+                  }
+                } else {
+                  console.log(
+                    `${oldMessage ? 'OLD' : ''}Message with bad data:`,
+                    message,
+                  );
                 }
-              } else {
-                console.log(
-                  `${oldMessage ? 'OLD' : ''}Message with bad data:`,
-                  message,
-                );
               }
               break;
             default:
-              console.log(
-                `${oldMessage ? 'OLD' : ''}Message with bad data:`,
-                message,
-              );
+              console.log('Unknown data from Robot Web Server:', message);
           }
         }
         break;
       default:
-        console.log('Unknown data from Robot Web Server:', message);
+        console.log(`Unknown message event type:`);
+        console.log(message);
     }
   }
 };

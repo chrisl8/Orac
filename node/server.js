@@ -20,6 +20,7 @@ import playWav from './playWav.js';
 import messageHandler from './messageHandler.js';
 import taskListObject from './taskListObject.js';
 import trellis from './trellis.js';
+import taskHandler from './taskHandler.js';
 
 const robotSocketServerSubscriber = new RobotSocketServerSubscriber(
   messageHandler,
@@ -82,24 +83,7 @@ const handleTrellisInput = async (input) => {
             console.log(`Button ${button} cleared.`);
             for (const [key, value] of Object.entries(taskListObject)) {
               if (value.trellisButton === button) {
-                const lastDone = await persistentData.get(
-                  `${key}-LastDoneTime`,
-                );
-                const lastReminder = await persistentData.get(
-                  `${key}-LastReminderTime`,
-                );
-                // Don't do anything if this was already done today
-                // Or if there was no reminder yet today (wrong button?)
-                if (
-                  isToday(new Date(lastReminder.timestamp)) &&
-                  !isToday(new Date(lastDone.timestamp))
-                ) {
-                  persistentData.set(`${key}-LastDoneTime`);
-                  console.log(`${key} has been completed.`);
-                  if (trackedStatusObject.officeLights.on && value.speakDone) {
-                    speak(value.speakDone);
-                  }
-                }
+                taskHandler.completed(key);
               }
             }
           } else if (trellisCommand === 'LitButtons') {
@@ -108,7 +92,6 @@ const handleTrellisInput = async (input) => {
         }
       }
     }
-    console.log('');
   }
 };
 
