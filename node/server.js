@@ -371,14 +371,16 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
       break;
     case 'binary_sensor.cooper_s_lids':
       // TODO: Alert me if something is not
-      console.log(
-        `Blue Dwarf Driver Door is ${eventData.attributes.leftFront}.`,
-      );
-      console.log(
-        `Blue Dwarf Passenger Door is ${eventData.attributes.rightFront}.`,
-      );
-      console.log(`Blue Dwarf Hood is ${eventData.attributes.hood}.`);
-      console.log(`Blue Dwarf Trunk is ${eventData.attributes.trunk}.`);
+      if (eventData.attributes) {
+        console.log(
+          `Blue Dwarf Driver Door is ${eventData.attributes.leftFront}.`,
+        );
+        console.log(
+          `Blue Dwarf Passenger Door is ${eventData.attributes.rightFront}.`,
+        );
+        console.log(`Blue Dwarf Hood is ${eventData.attributes.hood}.`);
+        console.log(`Blue Dwarf Trunk is ${eventData.attributes.trunk}.`);
+      }
       break;
     case 'binary_sensor.cooper_s_windows':
       // TODO: Alert if not
@@ -399,29 +401,31 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
       }
       break;
     case 'binary_sensor.cooper_s_condition_based_services':
-      console.log(`Blue Dwarf VIN is ${eventData.attributes.vin}`);
-      console.log(`Blue Dwarf Engine Oil is ${eventData.attributes.oil}`);
-      console.log(
-        `Blue Dwarf next Oil Change is on ${eventData.attributes.oil_date}`,
-      );
-      console.log(
-        `Blue Dwarf next Oil Change is at ${eventData.attributes.oil_distance} miles.`,
-      );
-      console.log(
-        `Blue Dwarf vehicle service check is ${eventData.attributes.vehicle_check}`,
-      );
-      console.log(
-        `Blue Dwarf next vehicle Service Check date is ${eventData.attributes.vehicle_check_date}`,
-      );
-      console.log(
-        `Blue Dwarf next vehicle Service Check is at ${eventData.attributes.vehicle_check_distance} miles.`,
-      );
-      console.log(
-        `Blue Dwarf Brake Fluid is ${eventData.attributes.brake_fluid}`,
-      );
-      console.log(
-        `Blue Dwarf next Brake Fluid check is ${eventData.attributes.brake_fluid_date}`,
-      );
+      if (eventData.attributes) {
+        console.log(`Blue Dwarf VIN is ${eventData.attributes.vin}`);
+        console.log(`Blue Dwarf Engine Oil is ${eventData.attributes.oil}`);
+        console.log(
+          `Blue Dwarf next Oil Change is on ${eventData.attributes.oil_date}`,
+        );
+        console.log(
+          `Blue Dwarf next Oil Change is at ${eventData.attributes.oil_distance} miles.`,
+        );
+        console.log(
+          `Blue Dwarf vehicle service check is ${eventData.attributes.vehicle_check}`,
+        );
+        console.log(
+          `Blue Dwarf next vehicle Service Check date is ${eventData.attributes.vehicle_check_date}`,
+        );
+        console.log(
+          `Blue Dwarf next vehicle Service Check is at ${eventData.attributes.vehicle_check_distance} miles.`,
+        );
+        console.log(
+          `Blue Dwarf Brake Fluid is ${eventData.attributes.brake_fluid}`,
+        );
+        console.log(
+          `Blue Dwarf next Brake Fluid check is ${eventData.attributes.brake_fluid_date}`,
+        );
+      }
       break;
     case 'binary_sensor.cooper_s_check_control_messages':
       console.log(
