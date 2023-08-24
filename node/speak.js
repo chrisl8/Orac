@@ -1,7 +1,9 @@
 import spawnProcess from './spawnProcess.js';
+import onboardLeds from './onboardLeds.js';
 
 async function speak(text) {
   console.log(`"${text}"`);
+  onboardLeds.lightUp();
   await spawnProcess({
     path: `/usr/bin/espeak`,
     args: ['-v', 'en-scottish', '-p', '0', '-s', '150', text],

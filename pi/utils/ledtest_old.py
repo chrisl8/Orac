@@ -109,7 +109,8 @@ if __name__ == "__main__":
     #     leds.set_led(x, (0, 255, 0))
     #     time.sleep(0.2)
 
-    colors = [(255,0,0), (0,255,0), (0,0,255)]
+    #colors = [(255,0,0), (0,255,0), (0,0,255)]
+    colors = [(0,0,255)]
     color_index = 0
     while color_index < len(colors):
         fill_color = colors[color_index]
