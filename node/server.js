@@ -1313,6 +1313,7 @@ while (trackedStatusObject.keepRunning) {
   //  - Minutes is > 29
   //  - Last message sent more than 30 minutes ago
   //  - TODO: Any way to check activity data? sensor.sonic_screwdriver_activity
+  /*
   if (
     trackedStatusObject.userLocation.isHome &&
     trackedStatusObject.officeLights.on &&
@@ -1335,6 +1336,7 @@ while (trackedStatusObject.keepRunning) {
       pushMe(message);
     }
   }
+   */
 
   // Turn off Dalek lights if all garage doors are closed, and no motion is detected for X minutes\
   if (trackedStatusObject.wled.on) {
