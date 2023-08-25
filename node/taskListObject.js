@@ -12,6 +12,19 @@ const taskList = {
     trellisButtonColor: [0, 0, 255],
     pushoverExpirationTime: 60 * 10,
   },
+  vitamin: {
+    interval: 'daily',
+    reminderAfterHour: 7,
+    reminderAfterMinute: 30,
+    repeatInterval: 30, // minutes
+    message: "Don't forget to take your vitamin today!",
+    speakDo: 'Vitamins!',
+    speakDone: 'Yummy',
+    completedTexts: ['vitamin'],
+    trellisButton: 29,
+    trellisButtonColor: [0, 255, 0],
+    pushoverExpirationTime: 60 * 10,
+  },
   pushUps: {
     interval: 'daily',
     reminderAfterHour: 7,
@@ -55,8 +68,8 @@ const taskList = {
     interval: 'daily',
     reminderAfterHour: 12,
     reminderAfterMinute: 0,
-    repeatInterval: 15, // minutes
-    message: 'Time to do 15 on the bike. -green- 9',
+    repeatInterval: 1, // minutes
+    message: 'Time to do 15 on the bike.',
     speakDo: 'Time for some pedal pushing.',
     speakDone: 'Good job!',
     completedTexts: ['bike'],
