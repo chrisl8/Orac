@@ -10,20 +10,28 @@ const init = async (callback) => {
     'Adafruit_Trellis_M4_0B387B045336573232202020FF15111C',
     'ID_SERIAL',
   );
-  const path = await device.findDeviceName();
 
-  // Create a port
-  port = new SerialPort({
-    path,
-    baudRate: 9600,
-  });
+  let path;
+  try {
+    path = await device.findDeviceName();
+  } catch (e) {
+    console.error(`Trellis not found.`);
+  }
 
-  // Read data from port and display to terminal
-  port.on('data', (data) => {
-    if (data && data.toString() && data.toString().trim()) {
-      callback(data.toString().trim());
-    }
-  });
+  if (path) {
+    // Create a port
+    port = new SerialPort({
+      path,
+      baudRate: 9600,
+    });
+
+    // Read data from port and display to terminal
+    port.on('data', (data) => {
+      if (data && data.toString() && data.toString().trim()) {
+        callback(data.toString().trim());
+      }
+    });
+  }
 };
 
 function writeToSerialPort(text) {
