@@ -1215,6 +1215,8 @@ while (trackedStatusObject.keepRunning) {
       // Check timestamp
       if (
         !isToday(new Date(lastDone.timestamp)) &&
+        (!value.daysOfTheWeek ||
+          value.daysOfTheWeek.indexOf(new Date().getDay()) > -1) &&
         new Date().getHours() >= value.reminderAfterHour &&
         (new Date().getMinutes() >= value.reminderAfterMinute ||
           new Date().getHours() > value.reminderAfterHour)
@@ -1231,10 +1233,11 @@ while (trackedStatusObject.keepRunning) {
 
         // Send Reminders
         if (lastReminderMinutesAgo > value.repeatInterval) {
-          // First update last Reminder Sent time in database
+          // First update last Reminder Sent time in the database
           await persistentData.set(`${key}-LastReminderTime`);
           console.log(value.message);
           pushMe(value.message, value.pushoverExpirationTime);
+          // Speak, but only if the lights are on in the office.
           if (trackedStatusObject.officeLights.on && value.speakDo) {
             speak(value.speakDo);
           }

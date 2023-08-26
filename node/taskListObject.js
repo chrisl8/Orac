@@ -11,6 +11,7 @@ const taskList = {
     trellisButton: 30,
     trellisButtonColor: [0, 0, 255],
     pushoverExpirationTime: 60 * 10,
+    daysOfTheWeek: [1, 2, 3, 4, 5],
   },
   vitamin: {
     interval: 'daily',
@@ -37,6 +38,7 @@ const taskList = {
     trellisButton: 8,
     trellisButtonColor: [255, 0, 0],
     pushoverExpirationTime: 60 * 10,
+    daysOfTheWeek: [1, 2, 3, 4, 5],
   },
   hollowHolds: {
     interval: 'daily',
@@ -50,6 +52,7 @@ const taskList = {
     trellisButton: 9,
     trellisButtonColor: [255, 255, 0],
     pushoverExpirationTime: 60 * 10,
+    daysOfTheWeek: [1, 2, 3, 4, 5],
   },
   pullUps: {
     interval: 'daily',
@@ -63,6 +66,7 @@ const taskList = {
     trellisButton: 10,
     trellisButtonColor: [255, 0, 255],
     pushoverExpirationTime: 60 * 10,
+    daysOfTheWeek: [1, 2, 3, 4, 5],
   },
   bike: {
     interval: 'daily',
@@ -76,6 +80,7 @@ const taskList = {
     trellisButton: 11,
     trellisButtonColor: [0, 255, 0],
     pushoverExpirationTime: 60 * 10,
+    daysOfTheWeek: [1, 2, 3, 4, 5],
   },
 };
 
