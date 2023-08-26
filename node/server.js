@@ -359,7 +359,7 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'button.cooper_s_refresh_from_cloud':
       break;
     case 'sensor.cooper_s_mileage':
-      console.log(`Blue Dwarf has ${eventData.state} miles.`);
+      console.log(`Blue Dwarf has ${eventData.state} miles on it.`);
       // TODO: Record this somewhere just to keep track of for no reason.
       // TODO: Also record VIN and other details.
       break;
