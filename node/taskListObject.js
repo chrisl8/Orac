@@ -58,7 +58,7 @@ const taskList = {
     interval: 'daily',
     reminderAfterHour: 7,
     reminderAfterMinute: 30,
-    repeatInterval: 30, // minutes
+    repeatInterval: 90, // minutes
     message: "Don't forget to take your vitamin today!",
     speakDo: 'Vitamins!',
     speakDone: 'Yummy',
@@ -71,7 +71,7 @@ const taskList = {
     interval: 'daily',
     reminderAfterHour: 7,
     reminderAfterMinute: 30,
-    repeatInterval: 30, // minutes
+    repeatInterval: 90, // minutes
     message: 'Please do your push ups.',
     speakDo: "Don't forget to do your pushups today.",
     speakDone: 'Pushups done!',
@@ -85,7 +85,7 @@ const taskList = {
     interval: 'daily',
     reminderAfterHour: 9,
     reminderAfterMinute: 30,
-    repeatInterval: 30, // minutes
+    repeatInterval: 90, // minutes
     message: 'Hollow holds',
     speakDo: 'Crunch time!',
     speakDone: 'Yay!',
@@ -99,7 +99,7 @@ const taskList = {
     interval: 'daily',
     reminderAfterHour: 10,
     reminderAfterMinute: 30,
-    repeatInterval: 30, // minutes
+    repeatInterval: 90, // minutes
     message: 'Pullups',
     speakDo: 'Hang time!',
     speakDone: 'Who raw!',
@@ -113,7 +113,7 @@ const taskList = {
     interval: 'daily',
     reminderAfterHour: 12,
     reminderAfterMinute: 0,
-    repeatInterval: 15, // minutes
+    repeatInterval: 90, // minutes
     message: 'Time to do 15 on the bike.',
     speakDo: 'Time for some pedal pushing.',
     speakDone: 'Good job!',

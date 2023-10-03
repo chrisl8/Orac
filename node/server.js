@@ -172,7 +172,6 @@ function getStateFromEventOrState(eventData) {
 
 async function handleEntriesWithEventData(eventData, isInitialData) {
   const state = getStateFromEventOrState(eventData);
-  let testData;
   switch (eventData.entity_id) {
     case 'binary_sensor.basement':
       // Office Motion Sensor
@@ -258,6 +257,8 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
       // 'home'
       // 'unknown'
       // 'unavailable'
+
+      // Update status for any device that we are tracking.
       const trackingDeviceName = state.newState.entity_id.split('.')[1];
       if (
         trackedStatusObject.userLocation.trackedDevices.hasOwnProperty(
@@ -266,17 +267,26 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
       ) {
         trackedStatusObject.userLocation.trackedDevices[trackingDeviceName] =
           state.newState.state;
+        console.log(
+          `Device ${state.newState.attributes.friendly_name} location updated to '${state.newState.state}'.`,
+        );
       } else if (!isInitialData) {
         console.log(
           `Not using ${state.newState.attributes.friendly_name} location '${state.newState.state}' to track user's location.`,
         );
       }
+
+      // Use status for all tracked devices to update my "is home" state
       const userPreviousIsHome = trackedStatusObject.userLocation.isHome;
       let userIsHome = true;
-      // If ANY devices is not home, assume it is with the user that they are not home.
+      // If ANY devices are not home, assume it is with the user that they are not home.
       for (const [, value] of Object.entries(
         trackedStatusObject.userLocation.trackedDevices,
       )) {
+        // Options for 'state' are:
+        // 'home'
+        // 'unknown'
+        // 'unavailable'
         if (value !== 'home') {
           // Some status are not useful, so we tag them as "home".
           userIsHome = value === 'home' || value === 'unavailable';
@@ -372,14 +382,22 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'binary_sensor.cooper_s_lids':
       // TODO: Alert me if something is not
       if (eventData.attributes) {
-        console.log(
-          `Blue Dwarf Driver Door is ${eventData.attributes.leftFront}.`,
-        );
-        console.log(
-          `Blue Dwarf Passenger Door is ${eventData.attributes.rightFront}.`,
-        );
-        console.log(`Blue Dwarf Hood is ${eventData.attributes.hood}.`);
-        console.log(`Blue Dwarf Trunk is ${eventData.attributes.trunk}.`);
+        if (eventData.attributes.hasOwnProperty('leftFront')) {
+          console.log(
+            `Blue Dwarf Driver Door is ${eventData.attributes.leftFront}.`,
+          );
+        }
+        if (eventData.attributes.hasOwnProperty('rightFront')) {
+          console.log(
+            `Blue Dwarf Passenger Door is ${eventData.attributes.rightFront}.`,
+          );
+        }
+        if (eventData.attributes.hasOwnProperty('hood')) {
+          console.log(`Blue Dwarf Hood is ${eventData.attributes.hood}.`);
+        }
+        if (eventData.attributes.hasOwnProperty('trunk')) {
+          console.log(`Blue Dwarf Trunk is ${eventData.attributes.trunk}.`);
+        }
       }
       break;
     case 'binary_sensor.cooper_s_windows':
@@ -387,11 +405,14 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
       let windowOpen = false;
       for (const window of [
         'leftFront',
-        'leftRear', // I think this is wrong and always reads open
+        // 'leftRear', // I think this is wrong and always reads open
         'rightFront',
-        'rightRear', // I think this is wrong and always reads open
+        // 'rightRear', // I think this is wrong and always reads open
       ]) {
-        if (eventData.attributes[window] !== 'CLOSED') {
+        if (
+          eventData.attributes.hasOwnProperty(window) &&
+          eventData.attributes[window] !== 'CLOSED'
+        ) {
           console.log(`Blue Dwarf ${window} is OPEN!`);
           windowOpen = true;
         }
@@ -433,6 +454,9 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
           eventData.state === 'off' ? 'NOT ' : ' '
         }low.`,
       );
+      if (eventData.state && eventData.state !== 'off') {
+        pushMe('Blue Dwarf oil is low!');
+      }
       break;
     case 'binary_sensor.cooper_s_door_lock_state':
       console.log(
@@ -440,6 +464,9 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
           eventData.state === 'off' ? 'Locked.' : 'UNlocked!'
         }`,
       );
+      if (eventData.state && eventData.state !== 'off') {
+        pushMe('Blue Dwarf doors are unlocked!');
+      }
       break;
     case 'lock.cooper_s_lock':
       console.log(
@@ -833,6 +860,18 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'sensor.wichita_range_extender_info':
     case 'sensor.wichita_range_extender_battery':
     case 'binary_sensor.wichita_range_extender_tamper':
+    case 'select.back_door_kitchen_chirp_tone':
+    case 'select.garage_motion_sensor_chirp_tone':
+    case 'select.back_door_living_room_chirp_tone':
+    case 'select.door_to_garage_chirp_tone':
+    case 'switch.office_keypad_chirps':
+    case 'select.front_door_chirp_tone':
+    case 'select.back_door_garage_chirp_tone':
+    case 'select.garage_door_east_chirp_tone':
+    case 'select.garage_door_west_chirp_tone':
+    case 'switch.master_bedroom_keypad_chirps':
+    case 'select.office_motion_sensor_chirp_tone':
+    case 'select.kitchen_window_chirp_tone':
       break;
 
     // RING Keypads
@@ -885,9 +924,9 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'device_tracker.rivian_sensor_4_def8':
     case 'sensor.rivian_sensor_4_def8_estimated_distance':
     case 'sensor.rivian_phone_key_ee35_estimated_distance':
-      if (!isInitialData) {
-        console.log(eventData);
-      }
+      // if (!isInitialData) {
+      //   console.log(eventData);
+      // }
       break;
 
     case 'persistent_notification.config_entry_discovery':
@@ -1075,8 +1114,15 @@ function handleWebsocketInput(input) {
       case 'lovelace_updated':
       case 'entity_registry_updated':
       case 'persistent_notifications_updated':
+      case 'service_registered':
+      case 'component_loaded':
+      case 'device_registry_updated':
+      case 'panels_updated':
       case 'config_entry_discovered':
         // I think entity_registry_updated happens when a lovelace card is updated.
+        break;
+      case 'homeassistant_start':
+        console.log('Home Assistant starting up...');
         break;
       case 'homeassistant_started':
         console.log('Home Assistant just started.');
@@ -1085,7 +1131,7 @@ function handleWebsocketInput(input) {
         console.log('Home Assistant CORE Config updated.');
         break;
       case 'homeassistant_stop':
-        console.log('Home Assistant going down!');
+        console.log('Home Assistant shutting down!');
         break;
       default:
         console.log(`Unknown HA Event: ${input.event.event_type}`);
@@ -1205,13 +1251,14 @@ while (trackedStatusObject.keepRunning) {
   }
 
   // Task Reminders
+  let reminderWasSentThisTimeAlready; // Only one reminder per minute.
   for (const [key, value] of Object.entries(taskListObject)) {
     const lastDone = await persistentData.get(`${key}-LastDoneTime`);
     const lastReminder = await persistentData.get(`${key}-LastReminderTime`);
     const lastReminderMinutesAgo =
       (new Date().getTime() - lastReminder.timestamp) / 1000 / 60;
     // Daily
-    if (value.interval === 'daily') {
+    if (value.interval === 'daily' && trackedStatusObject.userLocation.isHome) {
       // Check timestamp
       if (
         !isToday(new Date(lastDone.timestamp)) &&
@@ -1232,7 +1279,11 @@ while (trackedStatusObject.keepRunning) {
         });
 
         // Send Reminders
-        if (lastReminderMinutesAgo > value.repeatInterval) {
+        if (
+          !reminderWasSentThisTimeAlready &&
+          lastReminderMinutesAgo > value.repeatInterval
+        ) {
+          reminderWasSentThisTimeAlready = true;
           // First update last Reminder Sent time in the database
           await persistentData.set(`${key}-LastReminderTime`);
           console.log(value.message);
