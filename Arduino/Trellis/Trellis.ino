@@ -1,4 +1,4 @@
-#include <Arduino.h>
+ #include <Arduino.h>
 #include "Adafruit_NeoTrellisM4.h"
 #include <Adafruit_NeoPixel.h>
 
@@ -56,14 +56,14 @@ void getKeyPress() {
             Serial.print("Pressed:[");
             Serial.print((int) e.bit.KEY);
             Serial.println("]");
-            trellis.setPixelColor(e.bit.KEY, 0xFFFFFF);
+            //trellis.setPixelColor(e.bit.KEY, 0xFFFFFF);
         } else if (e.bit.EVENT == KEY_JUST_RELEASED) {
             Serial.print("Released:[");
             Serial.print((int) e.bit.KEY);
             Serial.println("]");
-            trellis.setPixelColor(e.bit.KEY, 0x0);
-            litButtons[e.bit.KEY] = 0;
-            printLitButtonListAndSetBusy();
+            //trellis.setPixelColor(e.bit.KEY, 0x0);
+            //litButtons[e.bit.KEY] = 0;
+            //printLitButtonListAndSetBusy();
         }
     }
 }
