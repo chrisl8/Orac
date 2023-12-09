@@ -13,7 +13,7 @@ import Divider from '@mui/material/Divider';
 // https://mui.com/material-ui/material-icons/
 import HomeIcon from '@mui/icons-material/Home';
 
-import SiteIcon from './images/Orac.svg';
+import SiteIcon from './images/orac.svg';
 
 const Sidebar = () => {
   const NavLinkStyle = {
@@ -37,7 +37,7 @@ const Sidebar = () => {
       }}
     >
       <Stack direction="row" alignItems="center" gap={1}>
-        <SiteIcon style={{ width: 100, margin: 'auto' }} />
+        <img src={SiteIcon} alt="logo" style={{ width: 100, margin: 'auto' }} />
       </Stack>
       <Divider style={DividerTheme} />
       <nav aria-label="main mailbox folders">
