@@ -1,12 +1,11 @@
 TODO:
-
+1. Monitor count of 'espeak' or 'aplay' processes "stuck" and reboot if there are some.
 2. Notify if car doors are not locked.
-3. Notify if lights are on or doors open after certain time of day.
-2. Keep list of tasks to remind me to do until I've done them, with speech, pushover and lights.
+3. Notify if lights are on or doors open after a certain time of day.
 3. Enable finding items by searching obsidian documents.
-4. IF it looses track of me sometimes, use devices (like car) to override current isHome status when received, if they are far away.
+4. IF it loses track of me sometimes, use devices (like car) to override current isHome status when received, if they are far away.
 
-Alert me when watch is fully charged, so I can put it back on.
+Alert me when my watch is fully charged, so I can put it back on.
 
 Check if:
  - Watch is not fully or almost fully charged
@@ -33,20 +32,7 @@ battery: 100,
 Things HA is doing by itself already:
 Turn on office lights when Office motion happens.
 
-# Hardware Information and Reference
-
-## SJ201 Information
-The board on the top of the Mark II dev kit is called the SJ201.
-
-Hardware Information
-https://github.com/MycroftAI/hardware-mycroft-mark-II/blob/master/mark-II-Rpi-devkit/KiCAD/SJ201-Raspberry%20Pi%204%20Daughterboard/README.md
-
-The primary information about it is here:
-https://github.com/MycroftAI/hardware-mycroft-mark-II
-but there is a more thorough testing suite that should help guide how to connect to all the features here:
-https://github.com/MycroftAI/mark-ii-hardware-testing
-
-# Setup
+# Pi Setup
 
 ## Raspberry Pi Install and Configuration
  - Use the [Raspberry Pi Imager](https://www.raspberrypi.com/software/) to install Raspberry Pi OS (64-bit)
@@ -60,29 +46,50 @@ https://github.com/MycroftAI/mark-ii-hardware-testing
    - If you set things up above, it should just boot right into xWindows with no password prompt
  - Configuration
    - SSH In and
+     - Install my dotfiles setup, reboot, updateAllTheThings.sh, and reboot
      - Run `sudo raspi-config` (Note: There is a GUI version of this, but it seems to be missing several options.)
-       - System Options
-         - Wireless LAN - Set to US so it can work (although I'm not using it) 
-           - Then Cancel when asked for an SSID
-         - Set your host name to `Orac` (If you did not already)
-       - Display Options
-         - Disable Screen Blanking (If you like, I do)
-       - Interface Options
-         - Enable SSH (If you did not already)
-         - Enable SPI (https://github.com/MycroftAI/mark-ii-hardware-testing)
-         - Enable I2C (https://github.com/MycroftAI/mark-ii-hardware-testing)
-           - One of the two, SPI and/or I2C, makes the touchscreen work, both in `evtest` and in X Windows.
-     - NOTE: You do **not** need to enable Legacy Camera Mode, and **should not**. It is only required for old Python scripts, such as Mycroft.
-   - Install Dotfiles per Readme instructions and also run updateAllTheThings.sh and reboot.
-   - 
+         - Interface Options
+             - Enable I2C (https://github.com/MycroftAI/mark-ii-hardware-testing)
+                 - This should allow the LEDs on top to be used.
+                 - I'm not using ANy other hardware on this board (no fan, no touchscreen, no camera, no microphone, no speaker)
 
 ## Set up Orac on this Devices
 
 Use `syncOrac.sh` to sync code to Pi
 ```
-cd ~/Orac/node
-npm ci
+cd ~/Orac/
+./setupAndUpdate.sh
 ```
+
+Reboot and everything should work.
+
+---
+
+## Auto Login
+If the auto-login to GUI quits on you, run `sudo raspi-config` and turn the Auto Login OFF and ON again and reboot, and it will fix it.
+System Options->Boot / Auto Login
+
+---
+DO NOT DO STUFF BELOW HERE
+It is just for reference
+
+# Old Setup Info
+This is old junk from when I was trying to use all of the hardware on the Mycroft Dev Kit, but it was not reliable.
+
+ - Run `sudo raspi-config` (Note: There is a GUI version of this, but it seems to be missing several options.)
+   - System Options
+     - Wireless LAN - Set to US so it can work (although I'm not using it) 
+       - Then Cancel when asked for an SSID
+     - Set your host name to `Orac` (If you did not already)
+   - Display Options
+     - Disable Screen Blanking (If you like, I do)
+   - Interface Options
+     - Enable SSH (If you did not already)
+     - Enable SPI (https://github.com/MycroftAI/mark-ii-hardware-testing)
+     - Enable I2C (https://github.com/MycroftAI/mark-ii-hardware-testing)
+       - One of the two, SPI and/or I2C, makes the touchscreen work, both in `evtest` and in X Windows.
+ - NOTE: You do **not** need to enable Legacy Camera Mode, and **should not**. It is only required for old Python scripts, such as Mycroft.
+- Install Dotfiles per Readme instructions and also run updateAllTheThings.sh and reboot.
 
 ### Fix up boot config
 Run `diff ~/Orac/pi/boot/config.txt /boot/config.txt` to see what you need to tweak,  
@@ -92,7 +99,7 @@ Replace command:
 `sudo cp /home/chrisl8/Orac/pi/boot/config.txt /boot/config.txt`
 
 ### Install audio drivers and libraries
-See further down for full information. This is the "quick start"  
+See further down for full information. This is the "quick start"
 
 ```
 cd
@@ -107,8 +114,6 @@ sudo mkdir /lib/modules/6.1.21-v8+/kernel/drivers/vocalfusion
 sudo cp vocalfusion* /lib/modules/6.1.21-v8+/kernel/drivers/vocalfusion
 sudo depmod 6.1.21-v8+ -a
 ```
-
-Reboot and sound should work.
 
 ### Make Orac run on startup, but from GUI so Audio works
 **Note: If a user autostart file exists at /home/pi/.config/lxsession/LXDE-pi, then the System autostart file is totally ignored (for that user).**
@@ -125,22 +130,28 @@ OR if you want the terminal to open and see it:
 
 If it isn't already done, add: `pm2 log` to the bottom of `startpm2.sh` to prevent if from just shutting down immediately.
 
-## Auto Login
-If the auto-login to GUI quits on you, run `sudo raspi-config` and turn the Auto Login OFF and ON again and reboot, and it will fix it.
-System Options->Boot / Auto Login
 
 ---
-
-# Hardware Information.
-
-### boot config References
+# boot config References
 https://www.raspberrypi.com/documentation/computers/config_txt.html
 https://github.com/raspberrypi/firmware/blob/master/boot/overlays/README
 
-# All Extra Functions on Raspbian
+# Hardware Information and Reference
 
-## SJ201 Board
-Verify SJ201 board exists and find version
+## SJ201 Information
+
+### SJ201 Board
+The board on the top of the Mark II dev kit is called the SJ201.
+
+Hardware Information
+https://github.com/MycroftAI/hardware-mycroft-mark-II/blob/master/mark-II-Rpi-devkit/KiCAD/SJ201-Raspberry%20Pi%204%20Daughterboard/README.md
+
+The primary information about it is here:
+https://github.com/MycroftAI/hardware-mycroft-mark-II
+but there is a more thorough testing suite that should help guide how to connect to all the features here:
+https://github.com/MycroftAI/mark-ii-hardware-testing
+
+### Verify SJ201 board exists and find version
 
 References:
 https://github.com/MycroftAI/mark-ii-hardware-testing/blob/main/init_hardware.sh
