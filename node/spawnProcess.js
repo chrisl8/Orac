@@ -24,6 +24,9 @@ function spawnProcess({ path, args = [], silent }) {
       if (code > 0) {
         reject(code);
       }
+      if (!silent && outputData) {
+        console.log(String(outputData));
+      }
       resolve(String(outputData));
     });
   });
