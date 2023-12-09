@@ -11,7 +11,7 @@ const __dirname = dirname(__filename);
 async function playWav({ shortFileName }) {
   const soundFileName = `${__dirname}/../Sounds/${shortFileName}.wav`;
   await spawnProcess({
-    path: `${__dirname}/../pi/utils/playSound.sh`,
+    path: `${__dirname}/../pi/scripts/playSound.sh`,
     args: ['--path', soundFileName, '--volume', 100],
     silent: true,
   });

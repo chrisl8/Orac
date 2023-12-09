@@ -13,7 +13,7 @@ async function speak(text) {
   console.log(`"${text}"`);
   onboardLeds.lightUp();
   await spawnProcess({
-    path: `${__dirname}/../pi/utils/speak.sh`,
+    path: `${__dirname}/../pi/scripts/speak.sh`,
     args: [`--text`, text, '--volume', 100],
   });
 }
