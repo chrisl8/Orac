@@ -13,7 +13,7 @@ import Divider from '@mui/material/Divider';
 // https://mui.com/material-ui/material-icons/
 import HomeIcon from '@mui/icons-material/Home';
 
-import { ReactComponent as SiteIcon } from './images/Orac.svg';
+import SiteIcon from './images/Orac.svg';
 
 const Sidebar = () => {
   const NavLinkStyle = {
