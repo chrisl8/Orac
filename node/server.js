@@ -369,14 +369,18 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'button.cooper_s_refresh_from_cloud':
       break;
     case 'sensor.cooper_s_mileage':
-      console.log(`Blue Dwarf has ${eventData.state} miles on it.`);
+      if (eventData.state && eventData.state !== 'unavailable') {
+        console.log(`Blue Dwarf has ${eventData.state} miles on it.`);
+      }
       // TODO: Record this somewhere just to keep track of for no reason.
       // TODO: Also record VIN and other details.
       break;
     case 'sensor.cooper_s_remaining_fuel':
-      console.log(
-        `Blue Dwarf has ${eventData.state} gallons of fuel remaining.`,
-      );
+      if (eventData.state && eventData.state !== 'unavailable') {
+        console.log(
+          `Blue Dwarf has ${eventData.state} gallons of fuel remaining.`,
+        );
+      }
       // TODO: Notify via push if low.
       break;
     case 'binary_sensor.cooper_s_lids':
@@ -410,6 +414,7 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
         // 'rightRear', // I think this is wrong and always reads open
       ]) {
         if (
+          eventData.hasOwnProperty('attributes') &&
           eventData.attributes.hasOwnProperty(window) &&
           eventData.attributes[window] !== 'CLOSED'
         ) {
@@ -422,7 +427,7 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
       }
       break;
     case 'binary_sensor.cooper_s_condition_based_services':
-      if (eventData.attributes) {
+      if (eventData.attributes && eventData.attributes.vin) {
         console.log(`Blue Dwarf VIN is ${eventData.attributes.vin}`);
         console.log(`Blue Dwarf Engine Oil is ${eventData.attributes.oil}`);
         console.log(
@@ -449,31 +454,37 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
       }
       break;
     case 'binary_sensor.cooper_s_check_control_messages':
-      console.log(
-        `Blue Dwarf Engine Oil is ${
-          eventData.state === 'off' ? 'NOT ' : ' '
-        }low.`,
-      );
-      if (eventData.state && eventData.state !== 'off') {
-        pushMe('Blue Dwarf oil is low!');
+      if (eventData.state && eventData.state !== 'unavailable') {
+        console.log(
+          `Blue Dwarf Engine Oil is ${
+            eventData.state === 'off' ? 'NOT ' : ' '
+          }low.`,
+        );
+        if (eventData.state && eventData.state !== 'off') {
+          pushMe('Blue Dwarf oil is low!');
+        }
       }
       break;
     case 'binary_sensor.cooper_s_door_lock_state':
-      console.log(
-        `Blue Dwarf all Doors are ${
-          eventData.state === 'off' ? 'Locked.' : 'UNlocked!'
-        }`,
-      );
-      if (eventData.state && eventData.state !== 'off') {
-        pushMe('Blue Dwarf doors are unlocked!');
+      if (eventData.state && eventData.state !== 'unavailable') {
+        console.log(
+          `Blue Dwarf all Doors are ${
+            eventData.state === 'off' ? 'Locked.' : 'UNlocked!'
+          }`,
+        );
+        if (eventData.state && eventData.state !== 'off') {
+          pushMe('Blue Dwarf doors are unlocked!');
+        }
       }
       break;
     case 'lock.cooper_s_lock':
-      console.log(
-        `Blue Dwarf all Doors are ${
-          eventData.state === 'locked' ? 'Locked.' : 'UNlocked!'
-        }`,
-      );
+      if (eventData.state && eventData.state !== 'unavailable') {
+        console.log(
+          `Blue Dwarf all Doors are ${
+            eventData.state === 'locked' ? 'Locked.' : 'UNlocked!'
+          }`,
+        );
+      }
       break;
     // TODO: Test these as clearly some might mean something less obvious like boot vs hood vs top.
     // TODO: Notify if car is unlocked.
@@ -872,6 +883,7 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'switch.master_bedroom_keypad_chirps':
     case 'select.office_motion_sensor_chirp_tone':
     case 'select.kitchen_window_chirp_tone':
+    case 'switch.automation_entertainment_room_end_behavior':
       break;
 
     // RING Keypads
