@@ -1194,26 +1194,14 @@ ws.on('message', (data) => {
 await webserver();
 
 const hasBootedSemaphoreFile = `/tmp/OracFirstStarupAfterBoot`;
-// Things to do ONLY after first boot of device
+// Things to do ONLY after first boot of this device
 await new Promise((resolve) => {
   fs.readFile(hasBootedSemaphoreFile, async (readFileErr) => {
     if (readFileErr) {
       console.log('Initial device boot...');
-      await spawnProcess({ path: `${__dirname}/../pi/scripts/fanOff.sh` });
-      console.log('Fan is OFF');
       await spawnProcess({ path: `${__dirname}/../pi/scripts/ledsOff.sh` });
       console.log('LEDs are OFF');
-      await spawnProcess({
-        path: `python`,
-        args: [`${__dirname}/../pi/utils/init_sound_card.py`],
-      });
-      console.log('Sound card is initialized.');
-      const volume = 380;
-      await spawnProcess({
-        path: `python`,
-        args: [`${__dirname}/../pi/utils/set_volume.py`, volume],
-      });
-      console.log(`Volume is set to ${volume}`);
+      pushMe('Orac has booted.');
 
       fs.writeFile(hasBootedSemaphoreFile, 'DONE\n', (writeFileErr) => {
         if (writeFileErr) {
