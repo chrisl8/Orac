@@ -16,11 +16,16 @@ const App = () => {
     // componentDidMount
     // https://medium.com/@felippenardi/how-to-do-componentdidmount-with-react-hooks-553ba39d1571
 
-    const newSocket = openSocket({
-      transports: ['websocket'],
-    });
-    // For testing on my laptop with remote Orac:
-    // const newSocket = openSocket(`http://192.168.1.152:8080/`);
+    let newSocket;
+    if (window.location.hostname === 'localhost') {
+      // For testing on my laptop with remote Orac
+      newSocket = openSocket(`http://192.168.1.123:8080/`);
+    } else {
+      // For production on Orac
+      newSocket = openSocket({
+        transports: ['websocket'],
+      });
+    }
 
     setSocket(newSocket);
 
