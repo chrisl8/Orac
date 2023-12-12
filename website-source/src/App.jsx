@@ -6,7 +6,7 @@ import Base from './base';
 import Home from './routes/home';
 
 const App = () => {
-  const [, setSocket] = useState(null);
+  const [socket, setSocket] = useState(null);
   const [siteDataModel, setSiteDataModel] = useState({
     status: 'Offline',
     siteName: 'Orac',
@@ -40,13 +40,31 @@ const App = () => {
     });
   }, []);
 
+  const sendDataToOrac = (value, data) => {
+    if (socket) {
+      if (data !== undefined) {
+        socket.emit(value, data);
+      } else {
+        socket.emit(value);
+      }
+    }
+  };
+
   return (
     <>
       <CssBaseline />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Base />}>
-            <Route index element={<Home siteDataModel={siteDataModel} />} />
+            <Route
+              index
+              element={
+                <Home
+                  siteDataModel={siteDataModel}
+                  sendDataToOrac={sendDataToOrac}
+                />
+              }
+            />
             <Route path="*" element={<p>Page not found.</p>} />
           </Route>
         </Routes>
