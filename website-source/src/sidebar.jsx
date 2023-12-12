@@ -14,6 +14,7 @@ import Divider from '@mui/material/Divider';
 import HomeIcon from '@mui/icons-material/Home';
 
 import SiteIcon from './images/orac.svg';
+import HomeAssistantIcon from './images/home_assistant_icon_138491.svg';
 
 const Sidebar = () => {
   const NavLinkStyle = {
@@ -49,6 +50,20 @@ const Sidebar = () => {
                   <HomeIcon style={IconTheme} />
                 </ListItemIcon>
                 <ListItemText primary="Home" />
+              </ListItemButton>
+            </ListItem>
+          </NavLink>
+          <NavLink to="http://192.168.1.96:8123/" style={NavLinkStyle}>
+            <ListItem disablePadding>
+              <ListItemButton>
+                <ListItemIcon>
+                  <img
+                    className="white-icon"
+                    src={HomeAssistantIcon}
+                    alt="HA"
+                  />
+                </ListItemIcon>
+                <ListItemText primary="Home Assistant" />
               </ListItemButton>
             </ListItem>
           </NavLink>
