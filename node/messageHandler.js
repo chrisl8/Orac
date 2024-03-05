@@ -23,25 +23,6 @@ const messageHandler = (message) => {
       case 'newMessage':
         if (message.data && message.data.type) {
           switch (message.data.type) {
-            case 'location':
-              console.log(message.data);
-              if (message.data.location === 'home') {
-                if (
-                  message.data.action === 'arrived' &&
-                  !trackedStatusObject.userLocation.isHome
-                ) {
-                  trackedStatusObject.userLocation.enteredHomeRadius = true;
-                }
-                if (
-                  message.data.action === 'left' &&
-                  trackedStatusObject.userLocation.isHome
-                ) {
-                  trackedStatusObject.userLocation.enteredHomeRadius = false;
-                  trackedStatusObject.userLocation.isHome = false;
-                  pushMe(`Bye. :'(`);
-                }
-              }
-              break;
             case 'text':
               if (message.data && message.data.text) {
                 const cleanMessageText = message.data.text

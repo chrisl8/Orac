@@ -13,8 +13,7 @@ import makeRandomNumber from './makeRandomNumber.js';
 import persistentData from './persistentKeyValuePairs.js';
 import HttpRequest from './httpRequest.js';
 import spawnProcess from './spawnProcess.js';
-import speak from './speak.js';
-import { trackedStatusObject } from './trackedStatusDataModel.js';
+import { trackedStatusObject, updateStatus } from './trackedStatusDataModel.js';
 import RobotSocketServerSubscriber from './RobotSocketServerSubscriber.js';
 import playWav from './playWav.js';
 import messageHandler from './messageHandler.js';
@@ -95,6 +94,8 @@ const handleTrellisInput = async (input) => {
   }
 };
 
+// TODO: Currently a restart is required to find it if it was lost.
+//       It would be nice if we could plug/unplug it at will and it keep working.
 await trellis.init(handleTrellisInput);
 
 // TODO: Garage doors should have different sound.
@@ -113,19 +114,17 @@ const doorOpenClosedGenericResponse = async ({
   let announcedState = 'Unknown';
   let shortFileName;
   if (state.newState.hasOwnProperty('state') && state.newState.state === 'on') {
-    // Open  State
+    // Open State
     shortFileName = `DoorOpeningMinecraft`;
     persistentData.set(simplifiedName, true);
     announcedState = 'OPEN';
 
-    // Use door opening after arrived in home area to mark as home.
+    // Use door opening after arrived in home area to mark user as home.
     if (
       !trackedStatusObject.userLocation.isHome &&
       trackedStatusObject.userLocation.enteredHomeRadius
     ) {
       trackedStatusObject.userLocation.isHome = true;
-      trackedStatusObject.userLocation.enteredHomeRadius = false;
-      //pushMe(`${userIsHome ? 'Welcome home!' : "Bye. :'("}.`);
       pushMe(`Welcome home!`);
     }
   } else {
@@ -279,7 +278,7 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
       // Use status for all tracked devices to update my "is home" state
       const userPreviousIsHome = trackedStatusObject.userLocation.isHome;
       let userIsHome = true;
-      // If ANY devices are not home, assume it is with the user that they are not home.
+      // If ANY devices are not home, assume it is with the user and that they are not home.
       for (const [, value] of Object.entries(
         trackedStatusObject.userLocation.trackedDevices,
       )) {
@@ -288,17 +287,21 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
         // 'unknown'
         // 'unavailable'
         if (value !== 'home') {
-          // Some status are not useful, so we tag them as "home".
-          userIsHome = value === 'home' || value === 'unavailable';
+          userIsHome = false;
         }
       }
       if (userPreviousIsHome !== userIsHome) {
-        trackedStatusObject.userLocation.isHome = userIsHome;
+        trackedStatusObject.userLocation.enteredHomeRadius = userIsHome;
         console.log(
           `Christen has just ${userIsHome ? 'arrived home' : 'left'}.`,
         );
-        console.log(trackedStatusObject.userLocation);
-        pushMe(`${userIsHome ? 'Welcome home!' : "Bye. :'("}.`);
+        // For arrival, we only flag the user as having entered the home radius,
+        // and further action awaits the opening of a door,
+        // to avoid false positives.
+        if (!userIsHome) {
+          trackedStatusObject.userLocation.isHome = false;
+          pushMe(`Bye. :'(`);
+        }
       }
       break;
     // Office Lights
@@ -308,13 +311,17 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'light.facing_me':
       const officeLightEntryName = state.newState.entity_id.split('.')[1];
       const currentOfficeLightState = trackedStatusObject.officeLights.on;
-      trackedStatusObject.officeLights[officeLightEntryName] =
-        state.newState.state === 'on';
-      trackedStatusObject.officeLights.on =
+      updateStatus(
+        `officeLights.${officeLightEntryName}`,
+        state.newState.state === 'on',
+      );
+      updateStatus(
+        'officeLights.on',
         trackedStatusObject.officeLights.facing_back_yard ||
-        trackedStatusObject.officeLights.facing_me ||
-        trackedStatusObject.officeLights.facing_door ||
-        trackedStatusObject.officeLights.facing_closset;
+          trackedStatusObject.officeLights.facing_me ||
+          trackedStatusObject.officeLights.facing_door ||
+          trackedStatusObject.officeLights.facing_closset,
+      );
       if (trackedStatusObject.officeLights.on !== currentOfficeLightState) {
         trackedStatusObject.officeLights.onSince = new Date();
         console.log(
@@ -324,8 +331,12 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
         );
 
         // Do something when the lights come on
-        if (!isInitialData && trackedStatusObject.officeLights.on) {
-          playWav({ shortFileName: 'CastleInTheSky-RobotBeep2c' });
+        if (!isInitialData) {
+          if (trackedStatusObject.officeLights.on) {
+            playWav({ shortFileName: 'CastleInTheSky-RobotBeep2c' });
+          } else {
+            playWav({ shortFileName: 'CastleInTheSky-Drip2' });
+          }
         }
       }
       break;
@@ -370,6 +381,7 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
       break;
     case 'sensor.cooper_s_mileage':
       if (eventData.state && eventData.state !== 'unavailable') {
+        updateStatus('blueDwarf.mileage', eventData.state);
         console.log(`Blue Dwarf has ${eventData.state} miles on it.`);
       }
       // TODO: Record this somewhere just to keep track of for no reason.
@@ -387,19 +399,29 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
       // TODO: Alert me if something is not
       if (eventData.attributes) {
         if (eventData.attributes.hasOwnProperty('leftFront')) {
+          updateStatus(
+            'blueDwarf.doors.driver',
+            eventData.attributes.leftFront,
+          );
           console.log(
             `Blue Dwarf Driver Door is ${eventData.attributes.leftFront}.`,
           );
         }
         if (eventData.attributes.hasOwnProperty('rightFront')) {
+          updateStatus(
+            'blueDwarf.doors.passenger',
+            eventData.attributes.rightFront,
+          );
           console.log(
             `Blue Dwarf Passenger Door is ${eventData.attributes.rightFront}.`,
           );
         }
         if (eventData.attributes.hasOwnProperty('hood')) {
+          updateStatus('blueDwarf.hood', eventData.attributes.hood);
           console.log(`Blue Dwarf Hood is ${eventData.attributes.hood}.`);
         }
         if (eventData.attributes.hasOwnProperty('trunk')) {
+          updateStatus('blueDwarf.trunk', eventData.attributes.trunk);
           console.log(`Blue Dwarf Trunk is ${eventData.attributes.trunk}.`);
         }
       }
@@ -407,19 +429,28 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
     case 'binary_sensor.cooper_s_windows':
       // TODO: Alert if not
       let windowOpen = false;
-      for (const window of [
-        'leftFront',
-        // 'leftRear', // I think this is wrong and always reads open
-        'rightFront',
-        // 'rightRear', // I think this is wrong and always reads open
-      ]) {
-        if (
-          eventData.hasOwnProperty('attributes') &&
-          eventData.attributes.hasOwnProperty(window) &&
-          eventData.attributes[window] !== 'CLOSED'
-        ) {
-          console.log(`Blue Dwarf ${window} is OPEN!`);
+      if (eventData.attributes.hasOwnProperty('leftFront')) {
+        updateStatus(
+          'blueDwarf.windows.driver',
+          eventData.attributes.leftFront,
+        );
+        if (eventData.attributes.leftFront !== 'CLOSED') {
           windowOpen = true;
+          console.log(
+            `Blue Dwarf Driver Window is ${eventData.attributes.leftFront}.`,
+          );
+        }
+      }
+      if (eventData.attributes.hasOwnProperty('rightFront')) {
+        updateStatus(
+          'blueDwarf.windows.passenger',
+          eventData.attributes.rightFront,
+        );
+        if (eventData.attributes.rightFront !== 'CLOSED') {
+          windowOpen = true;
+          console.log(
+            `Blue Dwarf Passenger Window is ${eventData.attributes.rightFront}.`,
+          );
         }
       }
       if (!windowOpen) {
@@ -428,25 +459,60 @@ async function handleEntriesWithEventData(eventData, isInitialData) {
       break;
     case 'binary_sensor.cooper_s_condition_based_services':
       if (eventData.attributes && eventData.attributes.vin) {
+        updateStatus('blueDwarf.vin', eventData.attributes.vin);
         console.log(`Blue Dwarf VIN is ${eventData.attributes.vin}`);
+
+        updateStatus('blueDwarf.oil.status', eventData.attributes.oil);
         console.log(`Blue Dwarf Engine Oil is ${eventData.attributes.oil}`);
+
+        updateStatus('blueDwarf.oil.date', eventData.attributes.oil_date);
         console.log(
           `Blue Dwarf next Oil Change is on ${eventData.attributes.oil_date}`,
+        );
+
+        updateStatus(
+          'blueDwarf.oil.distance',
+          eventData.attributes.oil_distance,
         );
         console.log(
           `Blue Dwarf next Oil Change is at ${eventData.attributes.oil_distance} miles.`,
         );
+
+        updateStatus(
+          'blueDwarf.service.status',
+          eventData.attributes.vehicle_check,
+        );
         console.log(
           `Blue Dwarf vehicle service check is ${eventData.attributes.vehicle_check}`,
+        );
+
+        updateStatus(
+          'blueDwarf.service.date',
+          eventData.attributes.vehicle_check_date,
         );
         console.log(
           `Blue Dwarf next vehicle Service Check date is ${eventData.attributes.vehicle_check_date}`,
         );
+
+        updateStatus(
+          'blueDwarf.service.distance',
+          eventData.attributes.vehicle_check_distance,
+        );
         console.log(
           `Blue Dwarf next vehicle Service Check is at ${eventData.attributes.vehicle_check_distance} miles.`,
         );
+
+        updateStatus(
+          'blueDwarf.brakeFluid.status',
+          eventData.attributes.brake_fluid,
+        );
         console.log(
           `Blue Dwarf Brake Fluid is ${eventData.attributes.brake_fluid}`,
+        );
+
+        updateStatus(
+          'blueDwarf.brakeFluid.date',
+          eventData.attributes.brake_fluid_date,
         );
         console.log(
           `Blue Dwarf next Brake Fluid check is ${eventData.attributes.brake_fluid_date}`,
@@ -1090,6 +1156,12 @@ function handleWebsocketInput(input) {
             );
           }
           break;
+        case 'light.office_fan':
+        case 'light.facing_me':
+        case 'light.facing_back_yard':
+        case 'light.facing_closset':
+        case 'light.facing_door':
+          break;
         default:
           console.log(
             `HA Service: ${input.event.data.domain} ${input.event.data.service} ${service}`,
@@ -1157,6 +1229,7 @@ function handleWebsocketInput(input) {
 let authenticated = false;
 let id = 0;
 ws.on('open', () => {
+  updateStatus('homeAssistantConnected', true);
   console.log('Connected to Home Assistant.');
 });
 
@@ -1215,11 +1288,19 @@ await new Promise((resolve) => {
 });
 
 // Things done on startup
-speak('Hello World');
+// TODO: Put this back:
+// speak('Hello World');
+
+while (!trackedStatusObject.homeAssistantConnected) {
+  // Wait for connection to start.
+  await wait(1000);
+}
+
+process.on('SIGINT', () => {
+  updateStatus('keepRunning', false);
+});
 
 while (trackedStatusObject.keepRunning) {
-  await wait(1000 * 60); // Delay between rechecks
-
   // Reboot after 2am Daily
   // NOTE: Not doing this, as there is no need and it causes unneeded churn and noise.
   // const upTimeHours = os.uptime() / 60 / 60;
@@ -1251,48 +1332,60 @@ while (trackedStatusObject.keepRunning) {
   }
 
   // Task Reminders
-  let reminderWasSentThisTimeAlready; // Only one reminder per minute.
   for (const [key, value] of Object.entries(taskListObject)) {
     const lastDone = await persistentData.get(`${key}-LastDoneTime`);
-    const lastReminder = await persistentData.get(`${key}-LastReminderTime`);
-    const lastReminderMinutesAgo =
-      (new Date().getTime() - lastReminder.timestamp) / 1000 / 60;
-    // Daily
-    if (value.interval === 'daily' && trackedStatusObject.userLocation.isHome) {
-      // Check timestamp
+    // Daily Tasks
+    if (value.interval === 'daily' && !isToday(new Date(lastDone.timestamp))) {
       if (
-        !isToday(new Date(lastDone.timestamp)) &&
         (!value.daysOfTheWeek ||
           value.daysOfTheWeek.indexOf(new Date().getDay()) > -1) &&
         new Date().getHours() >= value.reminderAfterHour &&
         (new Date().getMinutes() >= value.reminderAfterMinute ||
           new Date().getHours() > value.reminderAfterHour)
       ) {
+        if (trackedStatusObject.userLocation.isHome) {
+          updateStatus(`todo.${key}`, {
+            pending: true,
+            todoListEntryText: value.todoListEntryText || value.message,
+          });
+          // Light Trellis buttons
+          trellis.toggleButton({
+            button: value.trellisButton,
+            color: [
+              value.trellisButtonColor[0],
+              value.trellisButtonColor[1],
+              value.trellisButtonColor[2],
+            ],
+          });
+
+          const activeReminder = await persistentData.get('activeReminder');
+          // Send Reminders
+          // TODO: Minimum delay between notifications.
+          if (!activeReminder.value) {
+            // Only allow one "active" reminder at a time,
+            // and persist that across restarts.
+            persistentData.set('activeReminder', key);
+            // First update last Reminder Sent time in the database
+            await persistentData.set(`${key}-LastReminderTime`);
+            console.log(value.message);
+            pushMe(value.message, value.pushoverExpirationTime);
+            // Ding, but only if the lights are on in the office.
+            if (trackedStatusObject.officeLights.on) {
+              playWav({ shortFileName: 'CastleInTheSky-RobotBeep2b' });
+            }
+          }
+        }
+      } else {
+        // If the due date isn't arrived yet, ensure lights are out
+        updateStatus(`todo.${key}`, {
+          pending: false,
+          todoListEntryText: value.todoListEntryText || value.message,
+        });
         // Light Trellis buttons
         trellis.toggleButton({
           button: value.trellisButton,
-          color: [
-            value.trellisButtonColor[0],
-            value.trellisButtonColor[1],
-            value.trellisButtonColor[2],
-          ],
+          color: [0, 0, 0],
         });
-
-        // Send Reminders
-        if (
-          !reminderWasSentThisTimeAlready &&
-          lastReminderMinutesAgo > value.repeatInterval
-        ) {
-          reminderWasSentThisTimeAlready = true;
-          // First update last Reminder Sent time in the database
-          await persistentData.set(`${key}-LastReminderTime`);
-          console.log(value.message);
-          pushMe(value.message, value.pushoverExpirationTime);
-          // Speak, but only if the lights are on in the office.
-          if (trackedStatusObject.officeLights.on && value.speakDo) {
-            speak(value.speakDo);
-          }
-        }
       }
     }
   }
@@ -1437,7 +1530,18 @@ while (trackedStatusObject.keepRunning) {
   // TODO: Hook up button board  and have it like flash a light somewhere with a color to indicate a "need to do" and I press it to clear it as "done". Screen could show what color is what thing.
   // TODO: Find some way to display information to the screen.
   // TODO: DIM screen when all hue lights are off.
+
+  let count = 1000;
+  while (trackedStatusObject.keepRunning && count > 0) {
+    count--;
+    await wait(60); // Delay between rechecks
+  }
 }
 
 console.error('Orac is shutting down.');
+console.log('Shutting off Trellis lights.');
+for (let i = 0; i < 32; i++) {
+  trellis.toggleButton({ button: i, color: [0, 0, 0] });
+  await wait(50); // It won't work if you don't give it a moment.
+}
 process.exit(); // Because of the webserver it won't just close on its own.

@@ -8,12 +8,16 @@ const trackedStatusObject = {
     lastChargingDoneMessageSent: null,
   },
   userLocation: {
-    enteredHomeRadius: false,
+    enteredHomeRadius: true, // Assume is home until we know otherwise
     isHome: true, // Assume is home until we know otherwise
     trackedDevices: {
-      sonicscrewdriver: 'home', // Always default to home if not known yet.
-      sonicscrewdriver_2: 'home',
-      sonic_screwdriver: 'home',
+      sonic_screwdriver: 'home', // Always default to home if not known yet.
+    },
+  },
+  blueDwarf: {
+    doors: {
+      driver: 'unknown',
+      passenger: 'unknown',
     },
   },
   officeLights: {
@@ -29,6 +33,9 @@ const trackedStatusObject = {
     on: false,
   },
   trellisButtons: [],
+  homeAssistantConnected: false,
+  todo: {},
+  activeReminder: null,
 };
 
 export default trackedStatusObject;

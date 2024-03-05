@@ -9,12 +9,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 async function playWav({ shortFileName }) {
-  const soundFileName = `${__dirname}/../Sounds/${shortFileName}.wav`;
-  await spawnProcess({
-    path: `${__dirname}/../pi/scripts/playSound.sh`,
-    args: ['--path', soundFileName, '--volume', 100],
-    silent: true,
-  });
+  if (shortFileName) {
+    const soundFileName = `${__dirname}/../Sounds/${shortFileName}.wav`;
+    await spawnProcess({
+      path: `${__dirname}/../pi/scripts/playSound.sh`,
+      args: ['--path', soundFileName, '--volume', 100],
+      silent: true,
+    });
+  } else {
+    console.error('No sound file name provided.');
+  }
 }
 
 export default playWav;

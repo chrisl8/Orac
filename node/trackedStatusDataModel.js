@@ -7,7 +7,7 @@ trackedStatusObject.status = 'Online';
 
 const statusEmitter = new EventEmitter();
 
-// At this moment, the only consumer of the robotModelEmitter update
+// At this moment, the only consumer of the emitter update
 // is the web server, and we don't want to overwhelm the network
 // with updates.
 // If we find this debounce is too long/short, we could
@@ -19,7 +19,7 @@ const debounceCheckAndUpdateFriends = _.debounce(() => {
   statusEmitter.emit('update');
 }, 300);
 
-// There is no prohibition on updating the robotModel directly,
+// There is no prohibition on updating the tracked status directly,
 // but if you want other tools to act on this update,
 // such as the front end website being updated,
 // then pass the update to this updater instead.
@@ -31,9 +31,4 @@ const updateStatus = (path, value) => {
   }
 };
 
-// You can also just call this to ensure an update happens
-const updateRobotModel = () => {
-  debounceCheckAndUpdateFriends();
-};
-
-export { trackedStatusObject, statusEmitter, updateStatus, updateRobotModel };
+export { trackedStatusObject, statusEmitter, updateStatus };

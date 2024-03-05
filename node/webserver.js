@@ -8,6 +8,7 @@ import {
   statusEmitter,
   trackedStatusObject,
 } from './trackedStatusDataModel.js';
+import taskHandler from './taskHandler.js';
 
 // https://stackoverflow.com/a/64383997/4982408
 const fileName = fileURLToPath(import.meta.url);
@@ -52,6 +53,10 @@ async function webserver() {
 
     statusEmitter.on('update', () => {
       emitStatusToFrontEnd();
+    });
+
+    socket.on('todo', (data) => {
+      taskHandler.completed(data.name);
     });
   });
 
