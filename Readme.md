@@ -1,9 +1,15 @@
+This is a personal project to make my own sort of "home assistant" system. Named Orac after the intelligent computer in Blake's 7.  
+I did not build this as a general purpose tool, but instead as a sort of playground for me to just write code to do things that I want to do with it.  
+
+**I do not expect this code to work generically for anyone else, but it is here if in case it can help you as examples.**
+
+# Personal Development Notes
+
 TODO:
-1. Monitor count of 'espeak' or 'aplay' processes "stuck" and reboot if there are some.
 2. Notify if car doors are not locked.
 3. Notify if lights are on or doors open after a certain time of day.
 3. Enable finding items by searching obsidian documents.
-4. IF it loses track of me sometimes, use devices (like car) to override current isHome status when received, if they are far away.
+4. If it loses track of me sometimes, use devices (like car) to override current isHome status when received, if they are far away.
 
 Alert me when my watch is fully charged, so I can put it back on.
 
