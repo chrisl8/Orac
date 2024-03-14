@@ -22,3 +22,5 @@ website/
 
 # Sound files that are big and copyrighted
 Sounds/
+
+__pycache__/
