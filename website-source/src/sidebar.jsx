@@ -29,6 +29,9 @@ const Sidebar = () => {
 
   const DividerTheme = { backgroundColor: 'rgba(255, 255, 255, 0.12)' };
 
+  // Make that pesky SVG icon white:
+  // https://stackoverflow.com/a/52041765/4982408
+
   return (
     <Box
       id="sidebar"
@@ -38,7 +41,11 @@ const Sidebar = () => {
       }}
     >
       <Stack direction="row" alignItems="center" gap={1}>
-        <img src={SiteIcon} alt="logo" style={{ width: 100, margin: 'auto' }} />
+        <img
+          src={SiteIcon}
+          alt="logo"
+          style={{ width: 100, margin: 'auto', filter: 'invert(1)' }}
+        />
       </Stack>
       <Divider style={DividerTheme} />
       <nav aria-label="main mailbox folders">
