@@ -1277,8 +1277,13 @@ await new Promise((resolve) => {
   fs.readFile(hasBootedSemaphoreFile, async (readFileErr) => {
     if (readFileErr) {
       console.log('Initial device boot...');
-      await spawnProcess({ path: `${__dirname}/../pi/scripts/ledsOff.sh` });
-      console.log('LEDs are OFF');
+      try {
+        await spawnProcess({ path: `${__dirname}/../pi/scripts/ledsOff.sh` });
+        console.log('LEDs are OFF');
+      } catch (e) {
+        console.error('Error turning off LEDs:');
+        console.error(e);
+      }
       pushMe('Orac has booted.');
 
       fs.writeFile(hasBootedSemaphoreFile, 'DONE\n', (writeFileErr) => {
