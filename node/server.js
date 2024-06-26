@@ -21,6 +21,11 @@ import taskListObject from './taskListObject.js';
 import trellis from './trellis.js';
 import taskHandler from './taskHandler.js';
 
+process.on('unhandledRejection', (reason, p) => {
+  console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+  // application specific logging, throwing an error, or other logic here
+});
+
 const robotSocketServerSubscriber = new RobotSocketServerSubscriber(
   messageHandler,
 );
